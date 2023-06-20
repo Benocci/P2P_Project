@@ -8,7 +8,12 @@ body {
     font-family: 'Montserrat', sans-serif;
     box-sizing: border-box;
   }
-  
+
+  .set-up {
+    box-sizing: border-box;
+    margin-left: 10%;
+  }
+
   .splash-container {
     display: flex;
     flex-direction: column;

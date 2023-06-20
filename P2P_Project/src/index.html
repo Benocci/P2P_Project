@@ -1,38 +1,71 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="en">
   <head>
     <meta charset="utf-8">
-    <title>Battle Ships</title>
-    <link rel="stylesheet" href="style.css">
-    <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Montserrat&display=swap" rel="stylesheet">
-    <script>
-      let gameMode = 'singlePlayer'
-    </script>
-    <script src="app.js" charset="utf-8"></script>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    
+    <title>Battleship Ethereum</title>
+
+    <!-- Bootstrap -->
+    <link href="style.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
   </head>
   <body>
     <div class="container">
-      <div class="battleship-grid grid-user"></div>
-      <div class="battleship-grid grid-computer"></div>
-    </div>
-
-    <div class="container hidden-info">
-      <div class="setup-buttons" id="setup-buttons">
-        <button id="start" class="btn">Start Game</button>
-        <button id="rotate" class="btn">Rotate Your Ships</button>
-      </div>
-      <h3 id="whose-go" class="info-text">Your Go</h3>
-      <h3 id="info" class="info-text"></h3>
-    </div>
-
-    <div class="container">
-      <div class="grid-display">
-        <div class="ship destroyer-container" draggable="true"><div id="destroyer-0"></div><div id="destroyer-1"></div></div>
-        <div class="ship submarine-container" draggable="true"><div id="submarine-0"></div><div id="submarine-1"></div><div id="submarine-2"></div></div>
-        <div class="ship cruiser-container" draggable="true"><div id="cruiser-0"></div><div id="cruiser-1"></div><div id="cruiser-2"></div></div>
-        <div class="ship battleship-container" draggable="true"><div id="battleship-0"></div><div id="battleship-1"></div><div id="battleship-2"></div><div id="battleship-3"></div></div>
-        <div class="ship carrier-container" draggable="true"><div id="carrier-0"></div><div id="carrier-1"></div><div id="carrier-2"></div><div id="carrier-3"></div><div id="carrier-4"></div></div>
+      <div class="row">
+        <div class="col-xs-12 col-sm-8 col-sm-push-2">
+          <h1 class="text-center">Battleship Ethereum Game</h1>
+          <hr/>
+          <br/>
+        </div>
       </div>
     </div>
+
+    <div class="set-up" id="createOrJoin">
+      <div id="createNewGame" class="col">
+        <h2>Click here to create a new game</h2>
+        <input type="submit" id="createNewGameBtn" value="Create a New Game">
+      </div>
+
+      <div id="joinRandomGame" class="col" >
+        <h2>Click here to join a random game</h2>
+        <input type="submit" id="joinRandomGameBtn" value="Join">
+      </div>
+
+      <div id="joinGame" class="col">
+        <h2>Click here to join a specific game</h2>
+        <input type="number" id="selectedGameId" min="0" placeholder="Insert here the GameId">
+        <input type="submit" value="Join" id="joinGameBtn">
+      </div>
+    </div>
+
+    <div class="set-up" id="setUpNewGame" hidden>
+      <div id="boardSizeDiv">
+        <h2>Choose the dimension of the board:</h2>
+        <input required type="number" id="boardSize">
+      </div>
+      <div id="shipDiv">
+        <h2>Choose the number of ships:</h2>
+        <input required type="number" id="shipNumber">
+      </div>
+      <div id="ethAmmountDiv">
+        <h2>Choose the ammount of ETH you want to bet:</h2>
+        <input required type="number" id="ethAmmount">
+      </div>
+    </div>
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="app.js"></script>
+    <script src="web3.min.js"></script>
   </body>
 </html>
