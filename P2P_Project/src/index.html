@@ -59,14 +59,11 @@
       <input type="number" id="selectedGameId" min="0" placeholder="Insert here the game Id">
       <input type="submit" value="Join" id="joinGameIdBtn">
     </div>
-  
-  </div> 
 
-  <div class="set-up" id="setUpNewGame" hidden>
-    <div id="backToMenuDiv">
-      <button id="backToMenu" type="button" class="btn btn-primary btn-lg">Click here to back to the main menu</button>
-    </div>
-  
+  </div>
+
+  <div class="form-start" id="setUpNewGame" hidden>
+
     <div id="boardSizeDiv">
       <h2>Choose the dimension of the board:</h2>
       <input required type="number" id="boardSize">
@@ -80,11 +77,19 @@
       <input required type="number" id="ethAmmount">
     </div>
 
-    <div id="createNewGameDiv">
+    <div id="set-upButton">
+      <button id="backToMenu" type="button" class="btn btn-primary btn-lg">Click here to back to the main menu</button>
       <button id="createGame" type="button" class="btn btn-primary btn-lg">Create a new game!</button>
     </div>
   </div>
 
+  <div id="gameBoardDiv" hidden>
+    <div id="gameBoardInformation">
+      <h2 id="gameBoardTitle"> Welcome on Battleship Game Ethereum!</h2>
+      <h2 id="gameBoardConnection">Loading..</h2>
+    </div>
+
+  </div>
 
 
   <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->

@@ -17,6 +17,20 @@ body {
     margin-left: 80px;
   }
 
+  .form-start{
+    color: rgb(255, 255, 255);
+    text-transform: capitalize;
+    text-align: center;
+    font-size: 1.3em;
+    font-weight: 600;
+    transform: perspective(1px) translateZ(0px);
+    transition-duration: 0.2s;
+    background-color: rgb(255, 151, 66);
+    border-radius: 60px;
+    padding: 14px 20px;
+    gap: 5px;
+  }
+
   .btn-start{
     color: rgb(255, 255, 255);
     text-transform: capitalize;

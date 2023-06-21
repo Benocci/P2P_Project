@@ -9,7 +9,7 @@ App = {
   contracts: {},
 
   init: async function () {
-    return await App.initWeb3();
+    return await App.bindEvents();
   },
 
   initWeb3: async function () {
@@ -91,7 +91,11 @@ App = {
         alert("The number of ships have to be a positive number!");
         return;
       }
-    }
+
+      $('#setUpNewGame').hide();
+      $('#gameBoardDiv').show();
+      $('#gameBoardConnection').text("Waiting for an opponents! The Game ID is " + gameId + "!");  
+    } 
   },
 
   joinGame: function () {
