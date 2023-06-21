@@ -1,71 +1,97 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
-    
-    <title>Battleship Ethereum</title>
 
-    <!-- Bootstrap -->
-    <link href="style.css" rel="stylesheet">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
 
-    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
-    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-    <!--[if lt IE 9]>
+  <title>Battleship Ethereum</title>
+
+  <!-- Bootstrap -->
+  <link href="style.css" rel="stylesheet">
+
+  <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+  <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+  <!--[if lt IE 9]>
       <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
       <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
     <![endif]-->
-  </head>
-  <body>
-    <div class="container">
-      <div class="row">
-        <div class="col-xs-12 col-sm-8 col-sm-push-2">
-          <h1 class="text-center">Battleship Ethereum Game</h1>
-          <hr/>
-          <br/>
-        </div>
+</head>
+
+<body>
+  <div class="container">
+    <div class="row">
+      <div class="col-xs-12 col-sm-8 col-sm-push-2">
+        <h1 class="text-center">Battleship Ethereum Game</h1>
+        <hr />
+        <br />
       </div>
     </div>
+  </div>
 
-    <div class="set-up" id="createOrJoin">
-      <div id="createNewGame" class="col">
+  <div class="set-up" id="createOrJoin">
+    <div class="col">
+      <div id="createNewGameBtn" class="btn-start">
         <h2>Click here to create a new game</h2>
-        <input type="submit" id="createNewGameBtn" value="Create a New Game">
       </div>
+    </div>
 
-      <div id="joinRandomGame" class="col" >
+    <div class="col" style="margin-top: 2%;">
+      <div id="joinRandomGameBtn" class="btn-start">
         <h2>Click here to join a random game</h2>
-        <input type="submit" id="joinRandomGameBtn" value="Join">
       </div>
+    </div>
 
-      <div id="joinGame" class="col">
+    <div class="col" style="margin-top: 2%;">
+      <div id="joinGameBtn" class="btn-start">
         <h2>Click here to join a specific game</h2>
-        <input type="number" id="selectedGameId" min="0" placeholder="Insert here the GameId">
-        <input type="submit" value="Join" id="joinGameBtn">
       </div>
     </div>
+  </div>
 
-    <div class="set-up" id="setUpNewGame" hidden>
-      <div id="boardSizeDiv">
-        <h2>Choose the dimension of the board:</h2>
-        <input required type="number" id="boardSize">
-      </div>
-      <div id="shipDiv">
-        <h2>Choose the number of ships:</h2>
-        <input required type="number" id="shipNumber">
-      </div>
-      <div id="ethAmmountDiv">
-        <h2>Choose the ammount of ETH you want to bet:</h2>
-        <input required type="number" id="ethAmmount">
-      </div>
+  <div id="joinSpecificGame" hidden>
+    <div id="backToMenuDiv">
+      <button id="backToMenu" type="button" class="btn btn-primary btn-lg">Click here to back to the main menu</button>
+    </div>
+    <div id="selectedGameIdDiv">
+      <input type="number" id="selectedGameId" min="0" placeholder="Insert here the game Id">
+      <input type="submit" value="Join" id="joinGameIdBtn">
+    </div>
+  
+  </div> 
+
+  <div class="set-up" id="setUpNewGame" hidden>
+    <div id="backToMenuDiv">
+      <button id="backToMenu" type="button" class="btn btn-primary btn-lg">Click here to back to the main menu</button>
+    </div>
+  
+    <div id="boardSizeDiv">
+      <h2>Choose the dimension of the board:</h2>
+      <input required type="number" id="boardSize">
+    </div>
+    <div id="shipDiv">
+      <h2>Choose the number of ships:</h2>
+      <input required type="number" id="shipNumber">
+    </div>
+    <div id="ethAmmountDiv">
+      <h2>Choose the ammount of ETH you want to bet in this game:</h2>
+      <input required type="number" id="ethAmmount">
     </div>
 
-    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-    <!-- Include all compiled plugins (below), or include individual files as needed -->
-    <script src="app.js"></script>
-    <script src="web3.min.js"></script>
-  </body>
+    <div id="createNewGameDiv">
+      <button id="createGame" type="button" class="btn btn-primary btn-lg">Create a new game!</button>
+    </div>
+  </div>
+
+
+
+  <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+  <!-- Include all compiled plugins (below), or include individual files as needed -->
+  <script src="app.js"></script>
+  <script src="web3.min.js"></script>
+</body>
+
 </html>

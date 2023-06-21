@@ -9,7 +9,7 @@ App = {
   contracts: {},
 
   init: async function () {
-    return await App.bindEvents();
+    return await App.initWeb3();
   },
 
   initWeb3: async function () {
@@ -32,13 +32,34 @@ App = {
   },
 
   initContract: function () {
+    $.getJSON("Battleship.json", function (data) {
+      var BattleshipGameArtifact = data;
+      App.contracts.BattleshipGame = TruffleContract(BattleshipGameArtifact);
+      App.contracts.BattleshipGame.setProvider(App.web3Provider);
+    });
 
+    return App.bindEvents();
   },
 
   bindEvents: async function () {
     $(document).on('click', '#createNewGameBtn', App.createNewGame);
     $(document).on('click', '#joinRandomGameBtn', App.joinRandomGame);
-    $(document).on('click', '#joinGameBtn', App.joinGame);
+    $(document).on('click', '#joinGameBtn', App.joinSpecificGame);
+    $(document).on('click', '#backToMenu', App.backToMainMenu);
+
+    $(document).on('input', "#boardSize", (event) => boardSize = event.target.value);
+    $(document).on('input', "#shipNumber", (event) => shipNumber = event.target.value);
+    $(document).on('input', "#ethAmmount", (event) => gameAmount = event.target.value);
+    
+    $(document).on('click', '#createGame', App.gameCreation);
+  
+    $(document).on('click', '#joinGameIdBtn', App.joinGame);
+  },
+
+  backToMainMenu: function () {
+    $('#createOrJoin').show();
+    $('#setUpNewGame').hide();
+    $('#joinSpecificGame').hide();
   },
 
   createNewGame: function () {
@@ -48,6 +69,29 @@ App = {
 
   joinRandomGame: function () {
     alert("You choose to join a random game!");
+  },
+
+  joinSpecificGame: function () {
+    $('#joinSpecificGame').show();
+    $('#createOrJoin').hide();
+  },
+
+  gameCreation: function () {
+
+    if(!boardSize || !shipNumber || !gameAmount) {
+      alert("You have to insert all the value to continue!");
+    }
+    else{
+      alert("Creation of a board of size " + boardSize + " with " + shipNumber + " ships and amount of ETH equal to " + gameAmount);
+      if(boardSize % 2 != 0 || boardSize <= 0){
+        alert("The board size have to be a positive number multilpe of 2!");
+        return;
+      }
+      if(shipNumber <= 0){
+        alert("The number of ships have to be a positive number!");
+        return;
+      }
+    }
   },
 
   joinGame: function () {

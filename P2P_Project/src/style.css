@@ -11,7 +11,25 @@ body {
 
   .set-up {
     box-sizing: border-box;
-    margin-left: 10%;
+    margin-top: 100px;
+    margin-bottom: 100px;
+    margin-right: 150px;
+    margin-left: 80px;
+  }
+
+  .btn-start{
+    color: rgb(255, 255, 255);
+    text-transform: capitalize;
+    text-align: center;
+    font-size: 1.3em;
+    font-weight: 600;
+    cursor: pointer;
+    transform: perspective(1px) translateZ(0px);
+    transition-duration: 0.2s;
+    background-color: rgb(255, 151, 66);
+    border-radius: 60px;
+    padding: 14px 20px;
+    gap: 5px;
   }
 
   .splash-container {
@@ -39,7 +57,7 @@ body {
   
   .btn {
     font-size: inherit;
-    background-color: hsl(30, 100%, 50%);
+    background-color: hsl(221, 100%, 50%);
     padding: .5em 1em;
     outline: none;
     border: none;
@@ -47,10 +65,12 @@ body {
     cursor: pointer;
     border-radius: .2em;
     color: #333;
+    margin: 5%;
   }
   
   .btn:hover, .btn:focus {
-    background-color: hsl(30, 100%, 40%);
+    background-color: hsl(240, 100%, 40%);
+    margin: 5%;
   }
   
   .splash-btn {
