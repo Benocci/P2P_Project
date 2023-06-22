@@ -9,7 +9,7 @@ App = {
   contracts: {},
 
   init: async function () {
-    return await App.bindEvents();
+    return await App.initWeb3();
   },
 
   initWeb3: async function () {
@@ -32,10 +32,10 @@ App = {
   },
 
   initContract: function () {
-    $.getJSON("Battleship.json", function (data) {
-      var BattleshipGameArtifact = data;
-      App.contracts.BattleshipGame = TruffleContract(BattleshipGameArtifact);
-      App.contracts.BattleshipGame.setProvider(App.web3Provider);
+    $.getJSON("BattleShipGame.json", function (data) {
+      var BattleShipGameArtifact = data;
+      App.contracts.BattleShipGame = TruffleContract(BattleShipGameArtifact);
+      App.contracts.BattleShipGame.setProvider(App.web3Provider);
     });
 
     return App.bindEvents();
