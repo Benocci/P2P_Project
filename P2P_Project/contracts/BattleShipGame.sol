@@ -13,16 +13,21 @@ contract BattleShipGame {
 
     mapping(uint256 => gameInfo) public gameList; //map of game's ID
 
+    uint256 public gameId=0;
+
     event GameCreated(
         uint256 indexed _gameId,
-        uint256 boardSize,
+        uint256 _boardSize,
         uint256 _shipNum
     );
 
-    function createGame(uint256 _boardSize, uint256 _shipNum) public {
-        uint256 gameIdToAdd;
 
-        gameList[gameIdToAdd] = gameInfo(
+    constructor () {}
+
+    function createGame(uint256 _boardSize, uint256 _shipNum) public {
+        uint256 newGameId = gameId++;
+
+        gameList[newGameId] = gameInfo(
             msg.sender,
             address(0),
             _boardSize,
@@ -30,5 +35,7 @@ contract BattleShipGame {
             0,
             true
         );
+
+        emit GameCreated(newGameId, _boardSize, _shipNum);
     }
 }
