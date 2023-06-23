@@ -16,15 +16,13 @@ contract BattleShipGame {
 
     uint256 public gameId=1;
 
+    error OutputError(string myError);
+
     event AmountEthOffer(address _sender, uint256 _amount, uint256 indexed _gameId);
 
     event AmountEthConfirm(address _sender, uint256 _amount, uint256 indexed _gameId);
 
-    event GameCreated(
-        uint256 indexed _gameId,
-        uint256 _boardSize,
-        uint256 _shipNum
-    );
+    event GameCreated(uint256 indexed _gameId);
 
     event GameJoined(
         uint256 indexed _gameId,
@@ -65,13 +63,13 @@ contract BattleShipGame {
             true
         );
         avaibleGame.push(newGameId);
-        emit GameCreated(newGameId, _boardSize, _shipNum);
+        emit GameCreated(newGameId);
     }
 
     function joinGame(uint256 _gameId) public {
         if(avaibleGame.length < 1){
             //TODO: handle the exception
-            return;
+            revert OutputError({myError: "No open games"});
         }
         
         uint256 chosenGameId;
@@ -81,10 +79,6 @@ contract BattleShipGame {
         }
         else{ //specific game
             chosenGameId = _gameId;
-        }
-
-        if(chosenGameId == 0){
-            return;
         }
 
         gameList[chosenGameId].joiner = msg.sender;
