@@ -98,6 +98,14 @@
   <script src="js/web3.min.js"></script>
   <script src="js/truffle-contract.js"></script>
   <script src="js/bootstrap.min.js"></script>
+  <script type="module">
+    import web3Utils from 'https://cdn.jsdelivr.net/npm/web3-utils@3.0.0-rc.0/+esm';
+
+    window.addEventListener('DOMContentLoaded', () => {
+      window.web3Utils = web3Utils;
+
+    });
+  </script>
 </body>
 
 </html>
