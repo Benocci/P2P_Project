@@ -42,9 +42,9 @@ App = {
     return App.bindEvents();
   },
 
-  bindEvents: async function () {
+  bindEvents: async function () { //function with all the function linked with the button of HTML 
     $(document).on('click', '#createNewGameBtn', App.createNewGame);
-    $(document).on('click', '#joinRandomGameBtn', App.joinRandomGame);
+    $(document).on('click', '#joinRandomGameBtn', App.joinGame);
     $(document).on('click', '#joinGameBtn', App.joinSpecificGame);
     $(document).on('click', '#backToMenu', App.backToMainMenu);
 
@@ -57,37 +57,33 @@ App = {
     $(document).on('click', '#joinGameIdBtn', App.joinGame);
   },
 
-  backToMainMenu: function () {
+  backToMainMenu: function () { // function for back to the menu
     $('#createOrJoin').show();
     $('#setUpNewGame').hide();
     $('#joinSpecificGame').hide();
   },
 
-  createNewGame: function () {
+  createNewGame: function () { // function to show the create game menu
     $('#setUpNewGame').show();
     $('#createOrJoin').hide();
   },
 
-  joinRandomGame: function () {
-    alert("You choose to join a random game!");
-  },
-
-  joinSpecificGame: function () {
+  joinSpecificGame: function () { // function to show the join a speciic game menu
     $('#joinSpecificGame').show();
     $('#createOrJoin').hide();
   },
 
-  gameCreation: function () {
+  gameCreation: function () { // function to handle a game creation
 
-    if (!boardSize || !shipNumber || !gameAmount) {
+    if (!boardSize || !shipNumber || !gameAmount) { // check on the input value
       alert("You have to insert all the value to continue!");
     }
     else {
-      if (boardSize % 2 != 0 || boardSize <= 0) {
+      if (boardSize % 2 != 0 || boardSize <= 0) { // size of the board is a positive number muliple of 2
         alert("The board size have to be a positive number multilpe of 2!");
         return;
       }
-      if (shipNumber <= 0) {
+      if (shipNumber <= 0) { // number of the ship > 0
         alert("The number of ships have to be a positive number!");
         return;
       }
@@ -96,47 +92,47 @@ App = {
       App.contracts.BattleShipGame.deployed().then(async function (instance) {
         newInstance = instance
         return newInstance.createGame(boardSize, shipNumber);
-      }).then(async function (logArray) {
-        gameId = logArray.logs[0].args._gameId.toNumber();
+      }).then(async function (logArray) { // callback to the contract function createGame
+        gameId = logArray.logs[0].args._gameId.toNumber(); // get the gameId from the event emitted in the contract
         if (gameId < 0) {
           console.error("Something went wrong, game id is negative!");
         }
         else {
+          // waiting room:
           $('#setUpNewGame').hide();
           $('#gameBoardDiv').show();
-          $('#gameBoardConnection').text("Waiting for an opponents! The Game ID is " + gameId + "!");
+          $('#gameBoardConnection').text("Creation of a board of size " + boardSize + " with " + shipNumber + " ships and amount of ETH equal to " + gameAmount  + 
+          "\nWaiting for an opponents! The Game ID is " + gameId + "!");
         }
       }).catch(function (err) {
         console.error(err);
       });
     }
-
-    alert("Creation of a board of size " + boardSize + " with " + shipNumber + " ships and amount of ETH equal to " + gameAmount);
   },
 
-  joinGame: function () {
+  joinGame: function () { // function to handle a join game
     var selectedGameId = $('#selectedGameId').val();
 
-    if(selectedGameId == 0){
-      alert("You have to insert a game ID grather than zero!");
-      return;
-    }
-
-    if (!selectedGameId) {
+    if (!selectedGameId) { // check on the gameId
       alert("You have to insert a game ID!");
     }
     else {
-      alert("You insert the game ID: " + selectedGameId);
+      if(selectedGameId == 0){ // check on the vale of the gameId
+        alert("You have to insert a game ID grather than zero!");
+        return;
+      }
 
       App.contracts.BattleShipGame.deployed().then(async function (instance) {
         newInstance = instance
         return newInstance.joinGame(selectedGameId);
-      }).then(async function (logArray) {
-        alert("You joined the game, the amount of ETH was set to ");
+      }).then(async function (logArray) { // callback to the contract function joinGame
+        // get all the value from the event emitted in the smart contract:
         gameId = logArray.logs[0].args._gameId.toNumber();
-        //gameAmount = logArray.logs[0].args.;
+        gameAmount = logArray.logs[0].args._ethAmount.toNumber();
         boardSize = logArray.logs[0].args._boardSize.toNumber();
         shipNumber = logArray.logs[0].args._shipNum.toNumber();
+        
+        alert("DEBUG: Id = " + gameId + ", board size " + boardSize + " and " + shipNumber + " ships!"); //DEBUG
       }).catch(function (err) {
         console.error(err);
       });

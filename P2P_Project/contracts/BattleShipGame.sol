@@ -2,7 +2,7 @@
 pragma solidity >=0.4.22 <0.9.0;
 
 contract BattleShipGame {
-    struct gameInfo {
+    struct gameInfo { // struct with all the information about a game
         address creator;
         address joiner;
         uint256 boardSize;
@@ -11,13 +11,15 @@ contract BattleShipGame {
         bool openGame;
     }
 
-    mapping(uint256 => gameInfo) public gameList; //map of game's ID
-    uint256[] public avaibleGame;
+    mapping(uint256 => gameInfo) public gameList; // map of game's ID (gameId => information of that game)
+    uint256[] public avaibleGame; // array with all the gameId of the avaible game
 
-    uint256 public gameId=1;
+    uint256 public gameId=1; // value of the next gameId
 
+    // error event:
     error OutputError(string myError);
 
+    // event:
     event AmountEthOffer(address _sender, uint256 _amount, uint256 indexed _gameId);
 
     event AmountEthConfirm(address _sender, uint256 _amount, uint256 indexed _gameId);
@@ -29,12 +31,23 @@ contract BattleShipGame {
         address _creator,
         address _joiner,
         uint256 _boardSize,
-        uint256 _shipNum
+        uint256 _shipNum,
+        uint256 _ethAmount
     );
 
 
     constructor () {}
 
+    // utility functions:
+
+
+    // function to return the gameId
+    function getId() public returns (uint256 toReturn){
+        toReturn = gameId++;
+        return toReturn;
+    }
+
+    // function to get the gameId of an avaible game
     function randomGame() public returns (uint256 randGameId) {
         if(avaibleGame.length == 0){
             return 0;
@@ -43,7 +56,7 @@ contract BattleShipGame {
         for(uint256 i=0; i<avaibleGame.length; i++){
             randGameId = avaibleGame[i];
             if(randGameId!=0){
-                avaibleGame[i] = 0;
+                avaibleGame[i] = 0; // TODO make a pop function tu extract the first element of the array
                 return randGameId;
             }
         }
@@ -51,8 +64,8 @@ contract BattleShipGame {
         return 0;
     }
 
-    function createGame(uint256 _boardSize, uint256 _shipNum) public {
-        uint256 newGameId = gameId++;
+    function createGame(uint256 _boardSize, uint256 _shipNum) public { // create a new game
+        uint256 newGameId = getId();
 
         gameList[newGameId] = gameInfo(
             msg.sender,
@@ -66,9 +79,8 @@ contract BattleShipGame {
         emit GameCreated(newGameId);
     }
 
-    function joinGame(uint256 _gameId) public {
+    function joinGame(uint256 _gameId) public { // join a new game
         if(avaibleGame.length < 1){
-            //TODO: handle the exception
             revert OutputError({myError: "No open games"});
         }
         
@@ -87,7 +99,8 @@ contract BattleShipGame {
             gameList[chosenGameId].creator,
             gameList[chosenGameId].joiner,
             gameList[chosenGameId].boardSize,
-            gameList[chosenGameId].shipNum);
+            gameList[chosenGameId].shipNum,
+            gameList[chosenGameId].ethAmount);
     }
 
 
