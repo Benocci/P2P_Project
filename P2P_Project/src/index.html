@@ -52,43 +52,48 @@
   </div>
 
   <div id="joinSpecificGame" hidden>
-    <div id="backToMenuDiv">
-      <button id="backToMenu" type="button" class="btn btn-primary btn-lg">Click here to back to the main menu</button>
-    </div>
     <div id="selectedGameIdDiv">
+      <h2>Insert the game id or leave the input box clear to join a random game!</h2>
       <input type="number" id="selectedGameId" min="0" placeholder="Insert here the game Id">
-      <input type="submit" value="Join" id="joinGameIdBtn">
+      <button id="backToMenuBtn" type="button" class="btn btn-primary btn-lg">Click here to back to the main menu</button>
+      <button id="joinGameIdBtn" type="button" class="btn btn-primary btn-lg">Join the game</button>
     </div>
-
   </div>
 
   <div class="form-start" id="setUpNewGame" hidden>
 
     <div id="boardSizeDiv">
       <h2>Choose the dimension of the board:</h2>
-      <input required type="number" id="boardSize">
+      <input required type="number" id="boardSize" value="6">
     </div>
     <div id="shipDiv">
       <h2>Choose the number of ships:</h2>
-      <input required type="number" id="shipNumber">
+      <input required type="number" id="shipNumber" value="3">
     </div>
     <div id="ethAmmountDiv">
       <h2>Choose the ammount of ETH you want to bet in this game:</h2>
-      <input required type="number" id="ethAmmount">
+      <input required type="number" id="ethAmmount" value="2">
     </div>
 
     <div id="set-upButton">
-      <button id="backToMenu" type="button" class="btn btn-primary btn-lg">Click here to back to the main menu</button>
-      <button id="createGame" type="button" class="btn btn-primary btn-lg">Create a new game!</button>
+      <button id="backToMenuBtn" type="button" class="btn btn-primary btn-lg">Click here to back to the main menu</button>
+      <button id="createGameBtn" type="button" class="btn btn-primary btn-lg">Create a new game!</button>
     </div>
   </div>
 
-  <div id="gameBoardDiv" hidden>
+  <div id="gameBoard" hidden>
     <div id="gameBoardInformation">
       <h2 id="gameBoardTitle"> Welcome to Battleship Game Ethereum!</h2>
       <h2 id="gameBoardConnection">Loading..</h2>
-    </div>
 
+      <button id="startPositionFaseBtn" type="button" class="btn btn-primary btn-lg" hidden>Start the game!</button>
+    </div>
+  </div>
+
+  <div id="acceptAmount" hidden>
+    <h2 id="acceptAmountText">Loading...</h2>
+    <button id="acceptAmountBtn" type="button" class="btn btn-primary btn-lg">Accept the Ethereum amount!</button>
+    <button id="refuseAmountBtn" type="button" class="btn btn-primary btn-lg">Quit this game!</button>
   </div>
 
   <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->

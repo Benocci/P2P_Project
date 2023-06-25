@@ -64,7 +64,7 @@ contract BattleShipGame {
         return 0;
     }
 
-    function createGame(uint256 _boardSize, uint256 _shipNum) public { // create a new game
+    function createGame(uint256 _boardSize, uint256 _shipNum, uint256 _ethAmount) public { // create a new game
         uint256 newGameId = getId();
 
         gameList[newGameId] = gameInfo(
@@ -72,7 +72,7 @@ contract BattleShipGame {
             address(0),
             _boardSize,
             _shipNum,
-            0,
+            _ethAmount,
             true
         );
         avaibleGame.push(newGameId);
@@ -103,7 +103,7 @@ contract BattleShipGame {
             gameList[chosenGameId].ethAmount);
     }
 
-
+    // 
     function AmountEthCommit(uint256 _gameId, uint256 _amount) public {
         emit AmountEthOffer(
             msg.sender,
@@ -111,6 +111,7 @@ contract BattleShipGame {
             _gameId);
     }
 
+    // 
     function AmountEthAccept(uint256 _gameId) public {
         emit AmountEthConfirm(
             msg.sender,
