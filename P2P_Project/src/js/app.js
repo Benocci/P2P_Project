@@ -137,8 +137,6 @@ App = {
       boardSize = logArray.logs[0].args._boardSize.toNumber();
       shipNumber = logArray.logs[0].args._shipNum.toNumber();
 
-      alert("DEBUG: Id = " + gameId + ", board size " + boardSize + " and " + shipNumber + " ships!"); //DEBUG
-
       App.showAcceptEthAmount();
     }).catch(function (err) {
       console.error(err);
@@ -176,7 +174,7 @@ App = {
   setBoard: async function () {
     await newInstance.allEvents(
     (err, events) => {
-      if(events.event == "AmountEthConfirm"){
+      if(events.event == "AmountEthResponse"){
         $('#gameBoard').show();
         $('#acceptAmount').hide();
         $('#waitingOpponent').hide();
