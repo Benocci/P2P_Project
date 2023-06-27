@@ -55,12 +55,17 @@ App = {
     $(document).on('click', '#createGameBtn', App.gameCreation);
     // button to accept the Ethereum amount
     $(document).on('click', '#acceptAmountBtn', App.acceptEthAmount);
+    // button to refuse the Ethereum amount
+    $(document).on('click', '#refuseAmountBtn', App.refuseEthAmount);
   },
 
   backToMainMenu: function () { // function for back to the menu
     $('#createOrJoin').show();
     $('#setUpNewGame').hide();
     $('#joinSpecificGame').hide();
+    $('#waitingOpponent').hide();
+    $('#acceptAmount').hide();
+    $('#gameBoard').hide();
   },
 
   createNewGame: function () { // function to show the create game menu
@@ -103,10 +108,11 @@ App = {
         else {
           // waiting room:
           $('#setUpNewGame').hide();
-          $('#gameBoard').show();
-          $('#gameBoardConnection').text("Creation of a board of size " + boardSize + " with " + shipNumber + " ships and amount of ETH equal to " + ethAmmount + ".\n" +
+          $('#waitingOpponent').show();
+          $('#waitingOpponentConnection').text("Creation of a board of size " + boardSize + " with " + shipNumber + " ships and amount of ETH equal to " + ethAmmount + ".\n" +
             "Waiting for an opponents! The Game ID is " + gameId + "!");
-        }
+          App.setBoard();
+          }
       }).catch(function (err) {
         console.error(err);
       });
@@ -118,6 +124,7 @@ App = {
 
     if (!selectedGameId) { // check on the gameId
       selectedGameId = 0;
+      $('#setUpNewGame').hide();
     }
 
     App.contracts.BattleShipGame.deployed().then(async function (instance) {
@@ -145,8 +152,40 @@ App = {
   },
 
   acceptEthAmount: function () {
+    App.contracts.BattleShipGame.deployed().then(async function (instance) {
+      newInstance = instance
+      return newInstance.AmountEthDecision(gameId, true);
+    }).then(async function (logArray) {
+      App.setBoard();
+    }).catch(function (err) {
+      console.error(err);
+    });
+  },
 
-  }
+  refuseEthAmount: function () {
+    App.contracts.BattleShipGame.deployed().then(async function (instance) {
+      newInstance = instance
+      return newInstance.AmountEthDecision(gameId, false);
+    }).then(async function (logArray) {
+      App.backToMainMenu();
+    }).catch(function (err) {
+      console.error(err);
+    });
+  },
+
+  setBoard: async function () {
+    await newInstance.allEvents(
+    (err, events) => {
+      if(events.event == "AmountEthConfirm"){
+        $('#gameBoard').show();
+        $('#acceptAmount').hide();
+        $('#waitingOpponent').hide();
+        
+        App.createBoardTable();
+      }
+
+    });
+  },
 };
 
 $(function () {

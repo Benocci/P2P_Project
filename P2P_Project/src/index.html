@@ -21,6 +21,7 @@
 </head>
 
 <body>
+  <!-- Title -->
   <div class="container">
     <div class="row">
       <div class="col-xs-12 col-sm-8 col-sm-push-2">
@@ -31,19 +32,21 @@
     </div>
   </div>
 
+  <!-- Main menu with tree button: create, random join and specific join  -->
   <div class="set-up" id="createOrJoin">
+    <!-- First button: start creation of a new game -->
     <div class="col">
       <div id="createNewGameBtn" class="btn-start">
         <h2>Click here to create a new game</h2>
       </div>
     </div>
-
+    <!-- Second button: join a random game -->
     <div class="col" style="margin-top: 2%;">
       <div id="joinRandomGameBtn" class="btn-start">
         <h2>Click here to join a random game</h2>
       </div>
     </div>
-
+    <!-- Third button: join a specific game -->
     <div class="col" style="margin-top: 2%;">
       <div id="joinGameBtn" class="btn-start">
         <h2>Click here to join a specific game</h2>
@@ -51,7 +54,8 @@
     </div>
   </div>
 
-  <div id="joinSpecificGame" hidden>
+  <!-- Menu for insert the Id of the game to join -->
+  <div id="joinSpecificGame" hidden class="form-start">
     <div id="selectedGameIdDiv">
       <h2>Insert the game id or leave the input box clear to join a random game!</h2>
       <input type="number" id="selectedGameId" min="0" placeholder="Insert here the game Id">
@@ -60,6 +64,7 @@
     </div>
   </div>
 
+  <!-- Menu for set the dimension of the board, the number of ships and the amount of Ethereum -->
   <div class="form-start" id="setUpNewGame" hidden>
 
     <div id="boardSizeDiv">
@@ -81,28 +86,38 @@
     </div>
   </div>
 
-  <div id="gameBoard" hidden>
-    <div id="gameBoardInformation">
-      <h2 id="gameBoardTitle"> Welcome to Battleship Game Ethereum!</h2>
-      <h2 id="gameBoardConnection">Loading..</h2>
-
-      <button id="startPositionFaseBtn" type="button" class="btn btn-primary btn-lg" hidden>Start the game!</button>
+  <!-- Menu for wait the opponent after create a game -->
+  <div id="waitingOpponent" hidden class="form-start">
+    <div>
+      <h2 id="waitingOpponentTitle"> Welcome to Battleship Game Ethereum!</h2>
+      <h2 id="waitingOpponentConnection">Loading..</h2>
     </div>
   </div>
 
-  <div id="acceptAmount" hidden>
+  <!-- Menu for accept the Ethereum amount of a joined game -->
+  <div id="acceptAmount" hidden class="form-start">
     <h2 id="acceptAmountText">Loading...</h2>
     <button id="acceptAmountBtn" type="button" class="btn btn-primary btn-lg">Accept the Ethereum amount!</button>
     <button id="refuseAmountBtn" type="button" class="btn btn-primary btn-lg">Quit this game!</button>
   </div>
 
+  <!-- BEGIN GAME SETTING -->
+
+  <!-- Game board -->
+  <div id="gameBoard" hidden class="form-start">
+    <h2 id="gameBoardTitle"> Welcome to Battleship Game Ethereum!</h2>
+    <h2 id="gameBoardText"> Insert the ship inside the board!</h2>
+  </div>
+
+
+  <!-- SCRIPT -->
   <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
   <!-- Include all compiled plugins (below), or include individual files as needed -->
-  <script src="js/app.js"></script>
   <script src="js/web3.min.js"></script>
   <script src="js/truffle-contract.js"></script>
   <script src="js/bootstrap.min.js"></script>
+  <script src="js/app.js"></script>
   <script type="module">
     import web3Utils from 'https://cdn.jsdelivr.net/npm/web3-utils@3.0.0-rc.0/+esm';
 
