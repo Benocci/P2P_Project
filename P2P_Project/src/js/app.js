@@ -3,6 +3,8 @@ var ethAmmount = null;
 var boardSize = null;
 var board = null;
 var shipNumber = null;
+var boardMatrix = Array.from({ length: boardSize }, () =>
+Array(boardSize).fill(0));
 
 App = {
   web3Provider: null,
@@ -175,7 +177,7 @@ App = {
     await newInstance.allEvents(
       (err, events) => {
         if (events.event == "AmountEthResponse") {
-          $('#gameBoard').show();
+          $('#posFase').show();
           $('#acceptAmount').hide();
           $('#waitingOpponent').hide();
 
@@ -210,8 +212,44 @@ App = {
         cell.classList.add("cell");
         cell.dataset.row = i;
         cell.dataset.col = j;
+        cell.addEventListener("click", (event) => App.placeShip(event));
         board.appendChild(cell);
       }
+    }
+  },
+
+  placeShip: function (event) {
+    const cellRow = event.target.dataset.row;
+    const cellCol = event.target.dataset.col;
+    const cell = document.querySelector(
+      `div[data-row='${cellRow}'][data-col='${cellCol}']`
+    );
+    const message = document.getElementById('messageInfo');
+
+    if (shipPlaced == numShips && boardMatrix[cell.dataset.row][cell.dataset.col] === 0) {
+      return;
+    }
+
+    if (boardMatrix[cell.dataset.row][cell.dataset.col] === 0) {
+      // Inserisci la nave nella posizione
+      cell.classList.add('ship');
+      message.textContent = "Nave posizionata!";
+      boardMatrix[cell.dataset.row][cell.dataset.col] = 1;
+      shipPlaced++;
+    } else {
+      // Rimuovi la nave se è già presente nella posizione
+      cell.classList.remove('ship');
+      cell.innerHTML = "";
+      message.textContent = "Nave rimossa!";
+      boardMatrix[cell.dataset.row][cell.dataset.col] = 0;
+      shipPlaced--;
+    }
+
+    if (shipPlaced == numShips) {
+      message.textContent = "Tutte le navi inserite!";
+      const submit = document.getElementById('submitBtn');
+      submit.style = "#submitBtn:hover{background-color: #32a7eb68;}";
+      submit.addEventListener("click", () => App.startBattle());
     }
   }
 };
