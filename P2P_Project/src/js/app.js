@@ -112,7 +112,7 @@ App = {
           $('#waitingOpponentConnection').text("Creation of a board of size " + boardSize + " with " + shipNumber + " ships and amount of ETH equal to " + ethAmmount + ".\n" +
             "Waiting for an opponents! The Game ID is " + gameId + "!");
           App.setBoard();
-          }
+        }
       }).catch(function (err) {
         console.error(err);
       });
@@ -173,17 +173,47 @@ App = {
 
   setBoard: async function () {
     await newInstance.allEvents(
-    (err, events) => {
-      if(events.event == "AmountEthResponse"){
-        $('#gameBoard').show();
-        $('#acceptAmount').hide();
-        $('#waitingOpponent').hide();
-        
-        App.createBoardTable();
-      }
+      (err, events) => {
+        if (events.event == "AmountEthResponse") {
+          $('#gameBoard').show();
+          $('#acceptAmount').hide();
+          $('#waitingOpponent').hide();
 
-    });
+          App.createBoardTable();
+        }
+
+      });
   },
+
+  createBoardTable: function () {
+    const board = document.getElementById('gameBoard');
+    board.style = "grid-template-columns: 40px repeat(" + boardSize + ", 1fr);grid-template-rows: 40px repeat(" + boardSize + ", 1fr);"
+
+    for (let j = 0; j <= boardSize; j++) {
+      const headerCell = document.createElement("div");
+      headerCell.classList.add("header-cell");
+      if (j > 0) {
+        headerCell.textContent = String.fromCharCode(64 + j);
+      }
+      board.appendChild(headerCell);
+    }
+
+    for (let i = 0; i < boardSize; i++) {
+      const headerCell = document.createElement("div");
+      headerCell.classList.add("header-cell");
+      headerCell.textContent = i + 1;
+
+      board.appendChild(headerCell);
+
+      for (let j = 0; j < boardSize; j++) {
+        const cell = document.createElement("div");
+        cell.classList.add("cell");
+        cell.dataset.row = i;
+        cell.dataset.col = j;
+        board.appendChild(cell);
+      }
+    }
+  }
 };
 
 $(function () {

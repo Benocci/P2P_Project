@@ -20,7 +20,9 @@ contract BattleShipGame {
     error OutputError(string myError);
 
     // event:
-    event GameCreated(uint256 indexed _gameId);
+    event GameCreated(
+        uint256 indexed _gameId
+    );
 
     event GameJoined(
         uint256 indexed _gameId,
@@ -48,7 +50,7 @@ contract BattleShipGame {
 
     // function to remove an element of the array avaibleGame
     function removeFromArray(uint256 index) public {
-        avaibleGame[index] = 0; // TODO make a pop function tu extract the first element of the array
+        delete avaibleGame[index]; // TODO make a pop function tu extract the first element of the array
     }
 
     // function to get the gameId of an avaible game
