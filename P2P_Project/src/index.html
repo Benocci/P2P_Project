@@ -105,7 +105,9 @@
 
   <!-- Game board - positioning fase -->
   <div id="posFase" class="posFase" hidden>
-    <div id="messageInfo" class="message">Inserisci le navi!</div>
+    <div class="form-start">
+      <h2 id="messageInfo">Place the ships!</h2>
+    </div>
 
     <div class="container">
       <div id="gameBoard" class="game-board"></div>
@@ -114,9 +116,15 @@
       -->
     </div>
 
-    <div id="submitBtn" class="message">Sottometti!</div>
+    <button id="submitBtn" type="button" class="btn btn-primary btn-lg">Submit your board!</button>
   </div>
 
+  <div id="battleFase" hidden>
+    <div id="battleInfo" class="message">Click to shoot!</div>
+    <div class="container">
+      <div id="battleGameBoard" class="game-board"></div>
+    </div>
+  </div>
 
   <!-- SCRIPT -->
   <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->

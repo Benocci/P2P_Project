@@ -40,6 +40,11 @@ contract BattleShipGame {
         bool response
     );
 
+    event SubmitBoard(
+        uint256 indexed _gameId,
+        uint256[][] _gameBoard
+    );
+
     constructor() {}
 
     // function to return the gameId
@@ -126,7 +131,7 @@ contract BattleShipGame {
         );
     }
 
-    function AmountEthDecision(uint256 _gameId, bool _response) public {
+    function amountEthDecision(uint256 _gameId, bool _response) public {
         if (!_response) {
             gameList[_gameId].joiner = address(0);
         }
@@ -136,6 +141,13 @@ contract BattleShipGame {
             gameList[_gameId].ethAmount,
             _gameId,
             _response
+        );
+    }
+
+    function submitBoard(uint256 _gameId, uint256[][] memory _gameBoard) public {
+        emit SubmitBoard(
+            _gameId,
+            _gameBoard
         );
     }
 }

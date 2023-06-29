@@ -3,8 +3,9 @@ var ethAmmount = null;
 var boardSize = null;
 var board = null;
 var shipNumber = null;
-var boardMatrix = Array.from({ length: boardSize }, () =>
-Array(boardSize).fill(0));
+var myBoardMatrix = Array.from({ length: boardSize }, () =>
+  Array(boardSize).fill(0));
+var opponentBoardMatrix;
 
 App = {
   web3Provider: null,
@@ -154,7 +155,7 @@ App = {
   acceptEthAmount: function () {
     App.contracts.BattleShipGame.deployed().then(async function (instance) {
       newInstance = instance
-      return newInstance.AmountEthDecision(gameId, true);
+      return newInstance.amountEthDecision(gameId, true);
     }).then(async function (logArray) {
       App.setBoard();
     }).catch(function (err) {
@@ -165,7 +166,7 @@ App = {
   refuseEthAmount: function () {
     App.contracts.BattleShipGame.deployed().then(async function (instance) {
       newInstance = instance
-      return newInstance.AmountEthDecision(gameId, false);
+      return newInstance.amountEthDecision(gameId, false);
     }).then(async function (logArray) {
       App.backToMainMenu();
     }).catch(function (err) {
@@ -176,12 +177,17 @@ App = {
   setBoard: async function () {
     await newInstance.allEvents(
       (err, events) => {
-        if (events.event == "AmountEthResponse") {
+        if (events.event == "AmountEthResponse" && events.args._gameId.toNumber() == gameId) {
           $('#posFase').show();
           $('#acceptAmount').hide();
           $('#waitingOpponent').hide();
 
           App.createBoardTable();
+        }
+        else if (events.event == "SubmitBoard" && events.args._gameId.toNumber() == gameId) {
+          opponentBoardMatrix = events.args._gameBoard;
+
+          App.startBattleFase();
         }
 
       });
@@ -209,7 +215,7 @@ App = {
 
       for (let j = 0; j < boardSize; j++) {
         const cell = document.createElement("div");
-        cell.classList.add("cell");
+        cell.classList.add("my-cell");
         cell.dataset.row = i;
         cell.dataset.col = j;
         cell.addEventListener("click", (event) => App.placeShip(event));
@@ -222,26 +228,26 @@ App = {
     const cellRow = event.target.dataset.row;
     const cellCol = event.target.dataset.col;
     const cell = document.querySelector(
-      `div[data-row='${cellRow}'][data-col='${cellCol}']`
+      `div.my-cell[data-row='${cellRow}'][data-col='${cellCol}']`
     );
     const message = document.getElementById('messageInfo');
 
-    if (shipPlaced == numShips && boardMatrix[cell.dataset.row][cell.dataset.col] === 0) {
+    if (shipPlaced == numShips && myBoardMatrix[cell.dataset.row][cell.dataset.col] === 0) {
       return;
     }
 
-    if (boardMatrix[cell.dataset.row][cell.dataset.col] === 0) {
+    if (myBoardMatrix[cell.dataset.row][cell.dataset.col] === 0) {
       // Inserisci la nave nella posizione
       cell.classList.add('ship');
       message.textContent = "Nave posizionata!";
-      boardMatrix[cell.dataset.row][cell.dataset.col] = 1;
+      myBoardMatrix[cell.dataset.row][cell.dataset.col] = 1;
       shipPlaced++;
     } else {
       // Rimuovi la nave se è già presente nella posizione
       cell.classList.remove('ship');
       cell.innerHTML = "";
       message.textContent = "Nave rimossa!";
-      boardMatrix[cell.dataset.row][cell.dataset.col] = 0;
+      myBoardMatrix[cell.dataset.row][cell.dataset.col] = 0;
       shipPlaced--;
     }
 
@@ -249,7 +255,67 @@ App = {
       message.textContent = "Tutte le navi inserite!";
       const submit = document.getElementById('submitBtn');
       submit.style = "#submitBtn:hover{background-color: #32a7eb68;}";
-      submit.addEventListener("click", () => App.startBattle());
+      submit.addEventListener("click", () => App.submitBoard());
+    }
+  },
+
+  submitBoard: function () {
+    App.contracts.BattleShipGame.deployed().then(async function (instance) {
+      newInstance = instance
+      return newInstance.submitBoard(gameId, myBoardMatrix);
+    }).then(async function (logArray) {
+      $('#posFase').hide();
+    }).catch(function (err) {
+      console.error(err);
+    });
+  },
+
+  startBattleFase: function () {
+    const board = document.getElementById('battleGameBoard');
+    board.style = "grid-template-columns: 40px repeat(" + boardSize + ", 1fr);grid-template-rows: 40px repeat(" + boardSize + ", 1fr);"
+
+    for (let j = 0; j <= boardSize; j++) {
+      const headerCell = document.createElement("div");
+      headerCell.classList.add("header-cell");
+      if (j > 0) {
+        headerCell.textContent = String.fromCharCode(64 + j);
+      }
+      board.appendChild(headerCell);
+    }
+
+    for (let i = 0; i < boardSize; i++) {
+      const headerCell = document.createElement("div");
+      headerCell.classList.add("header-cell");
+      headerCell.textContent = i + 1;
+
+      board.appendChild(headerCell);
+
+      for (let j = 0; j < boardSize; j++) {
+        const cell = document.createElement("div");
+        cell.classList.add("opponent-cell");
+        cell.dataset.row = i;
+        cell.dataset.col = j;
+        cell.addEventListener("click", (event) => App.handleCellClick(event));
+        board.appendChild(cell);
+      }
+    }
+  },
+
+  handleCellClick: function (event) {
+    const cellRow = event.target.dataset.row;
+    const cellCol = event.target.dataset.col;
+    const cell = document.querySelector(
+      `div.opponent-cell[data-row='${cellRow}'][data-col='${cellCol}']`
+    );
+    const battleInfo = document.getElementById('battleInfo');
+
+    if (boardMatrix[cellRow][cellCol] === 0) {
+      cell.innerHTML = "✖";
+      battleInfo.classList.remove("hit");
+      battleInfo.textContent = "Missed shot.";
+    } else if (boardMatrix[cellRow][cellCol] !== 0) {
+      cell.innerHTML = '💥'
+      battleInfo.textContent = "Shot hit!";
     }
   }
 };

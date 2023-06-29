@@ -127,6 +127,15 @@ h1 {
   width: 100%;
 }
 
+#message-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.posFase{
+  margin: 3%;
+}
 
 .game-board {
   display: grid;
@@ -139,18 +148,34 @@ h1 {
   background-color: #050538;
 }
 
-.cell {
+.my-cell {
   width: 50px;
   height: 50px;
-  background-size: cover;
-  background-position: center;
+  background-size: cover; 
+  background-position: center; 
   border: 1px solid #050538;
   color: black;
   font-size: 2em;
   display: grid;
   justify-content: center;
   align-items: center;
-  background-image: url(../img/sea.jpg);
+  background-color: blue;
+  /*background-image: url(./img/sea.jpg);*/
+}
+
+.opponent-cell {
+  width: 50px;
+  height: 50px;
+  background-size: cover; 
+  background-position: center; 
+  border: 1px solid #050538;
+  color: black;
+  font-size: 2em;
+  display: grid;
+  justify-content: center;
+  align-items: center;
+  background-color: blue;
+  /*background-image: url(./img/sea.jpg);*/
 }
 
 .header-cell {
