@@ -3,9 +3,9 @@ var ethAmmount = null;
 var boardSize = null;
 var board = null;
 var shipNumber = null;
-var myBoardMatrix = Array.from({ length: boardSize }, () =>
-  Array(boardSize).fill(0));
-var opponentBoardMatrix;
+var shipPlaced = null;
+var myBoardMatrix = null;
+var opponentBoardMatrix = null;
 
 App = {
   web3Provider: null,
@@ -51,7 +51,7 @@ App = {
     // buttons to join a game:
     $(document).on('click', '#joinRandomGameBtn', App.joinGame);
     $(document).on('click', '#joinGameBtn', App.joinSpecificGame);
-    $(document).on('click', '#joinGameIdBtn', App.joinGame);
+
     // button to back to main menu:
     $(document).on('click', '#backToMenuBtn', App.backToMainMenu);
     // button to create a new game:
@@ -79,6 +79,7 @@ App = {
   joinSpecificGame: function () { // function to show the join a speciic game menu
     $('#joinSpecificGame').show();
     $('#createOrJoin').hide();
+    $(document).on('click', '#joinGameIdBtn', App.joinGame);
   },
 
   gameCreation: function () { // function to handle a game creation
@@ -182,12 +183,16 @@ App = {
           $('#acceptAmount').hide();
           $('#waitingOpponent').hide();
 
+          shipPlaced = 0;
+          myBoardMatrix = Array.from({ length: boardSize }, () => Array(boardSize).fill(0));
           App.createBoardTable();
+          //alert("DEBUG: Creazione board piazzamento");
         }
         else if (events.event == "SubmitBoard" && events.args._gameId.toNumber() == gameId) {
           opponentBoardMatrix = events.args._gameBoard;
 
           App.startBattleFase();
+          alert("DEBUG: Creazione board battaglia");
         }
 
       });
@@ -230,36 +235,40 @@ App = {
     const cell = document.querySelector(
       `div.my-cell[data-row='${cellRow}'][data-col='${cellCol}']`
     );
-    const message = document.getElementById('messageInfo');
 
-    if (shipPlaced == numShips && myBoardMatrix[cell.dataset.row][cell.dataset.col] === 0) {
+    if (shipPlaced == shipNumber && myBoardMatrix[cell.dataset.row][cell.dataset.col] === 0) {
       return;
     }
 
     if (myBoardMatrix[cell.dataset.row][cell.dataset.col] === 0) {
       // Inserisci la nave nella posizione
       cell.classList.add('ship');
-      message.textContent = "Nave posizionata!";
+      $('#messageInfo').text("Nave posizionata!");
       myBoardMatrix[cell.dataset.row][cell.dataset.col] = 1;
       shipPlaced++;
+      alert("DEBUG: AGGIUNGO NAVE, Nave numero " + shipPlaced + " su " + shipNumber);
     } else {
       // Rimuovi la nave se è già presente nella posizione
       cell.classList.remove('ship');
-      cell.innerHTML = "";
-      message.textContent = "Nave rimossa!";
+      $('#messageInfo').text("Nave rimossa!");
       myBoardMatrix[cell.dataset.row][cell.dataset.col] = 0;
       shipPlaced--;
+      alert("DEBUG: RIMUOVO NAVE, Nave numero " + shipPlaced + " su " + shipNumber);
     }
 
-    if (shipPlaced == numShips) {
-      message.textContent = "Tutte le navi inserite!";
+    if (shipPlaced == shipNumber) {
+      $('#messageInfo').text("Tutte le navi inserite!");
       const submit = document.getElementById('submitBtn');
-      submit.style = "#submitBtn:hover{background-color: #32a7eb68;}";
       submit.addEventListener("click", () => App.submitBoard());
     }
   },
 
   submitBoard: function () {
+    if(shipPlaced != shipNumber){
+      alert("Please place " + shipNumber + " ship!");
+      return;
+    }
+
     App.contracts.BattleShipGame.deployed().then(async function (instance) {
       newInstance = instance
       return newInstance.submitBoard(gameId, myBoardMatrix);
@@ -271,6 +280,7 @@ App = {
   },
 
   startBattleFase: function () {
+    $('battleFase').show();
     const board = document.getElementById('battleGameBoard');
     board.style = "grid-template-columns: 40px repeat(" + boardSize + ", 1fr);grid-template-rows: 40px repeat(" + boardSize + ", 1fr);"
 

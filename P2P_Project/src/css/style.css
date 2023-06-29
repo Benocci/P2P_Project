@@ -188,3 +188,7 @@ h1 {
   color: black;
   background-image: url(../img/sea.jpg);
 }
+
+.ship {
+  background-color: gray;
+}
