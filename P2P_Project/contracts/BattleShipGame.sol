@@ -42,7 +42,7 @@ contract BattleShipGame {
 
     event SubmitBoard(
         uint256 indexed _gameId,
-        uint256[][] _gameBoard
+        uint256 _merkleRoot
     );
 
     constructor() {}
@@ -144,10 +144,10 @@ contract BattleShipGame {
         );
     }
 
-    function submitBoard(uint256 _gameId, uint256[][] memory _gameBoard) public {
+    function submitBoard(uint256 _gameId, uint256 _merkleRoot) public {
         emit SubmitBoard(
             _gameId,
-            _gameBoard
+            _merkleRoot
         );
     }
 }

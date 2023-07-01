@@ -3,7 +3,8 @@ var ethAmmount = null;
 var boardSize = null;
 var board = null;
 var shipNumber = null;
-var shipPlaced = null;
+var shipPlaced = 0;
+var merkleProofMatrix = [];
 var myBoardMatrix = null;
 var opponentBoardMatrix = null;
 
@@ -115,7 +116,26 @@ App = {
           $('#waitingOpponent').show();
           $('#waitingOpponentConnection').text("Creation of a board of size " + boardSize + " with " + shipNumber + " ships and amount of ETH equal to " + ethAmmount + ".\n" +
             "Waiting for an opponents! The Game ID is " + gameId + "!");
-          App.setBoard();
+
+          myBoardMatrix = [];
+
+          for (var i = 0; i < boardSize; i++) {
+            myBoardMatrix[i] = [];
+            for (var j = 0; j < boardSize; j++) {
+              myBoardMatrix[i][j] = 0;
+            }
+          }
+
+          opponentBoardMatrix = [];
+
+          for (var i = 0; i < boardSize; i++) {
+            opponentBoardMatrix[i] = [];
+            for (var j = 0; j < boardSize; j++) {
+              opponentBoardMatrix[i][j] = 0;
+            }
+          }
+
+          App.handleEvents();
         }
       }).catch(function (err) {
         console.error(err);
@@ -141,6 +161,26 @@ App = {
       boardSize = logArray.logs[0].args._boardSize.toNumber();
       shipNumber = logArray.logs[0].args._shipNum.toNumber();
 
+      myBoardMatrix = [];
+
+      for (var i = 0; i < boardSize; i++) {
+        myBoardMatrix[i] = [];
+        for (var j = 0; j < boardSize; j++) {
+          myBoardMatrix[i][j] = 0;
+        }
+      }
+
+
+      opponentBoardMatrix = [];
+
+      for (var i = 0; i < boardSize; i++) {
+        opponentBoardMatrix[i] = [];
+        for (var j = 0; j < boardSize; j++) {
+          opponentBoardMatrix[i][j] = 0;
+        }
+      }
+
+
       App.showAcceptEthAmount();
     }).catch(function (err) {
       console.error(err);
@@ -158,7 +198,7 @@ App = {
       newInstance = instance
       return newInstance.amountEthDecision(gameId, true);
     }).then(async function (logArray) {
-      App.setBoard();
+      App.handleEvents();
     }).catch(function (err) {
       console.error(err);
     });
@@ -175,7 +215,7 @@ App = {
     });
   },
 
-  setBoard: async function () {
+  handleEvents: async function () {
     await newInstance.allEvents(
       (err, events) => {
         if (events.event == "AmountEthResponse" && events.args._gameId.toNumber() == gameId) {
@@ -183,14 +223,12 @@ App = {
           $('#acceptAmount').hide();
           $('#waitingOpponent').hide();
 
-          shipPlaced = 0;
-          myBoardMatrix = Array.from({ length: boardSize }, () => Array(boardSize).fill(0));
           App.createBoardTable();
           //alert("DEBUG: Creazione board piazzamento");
         }
         else if (events.event == "SubmitBoard" && events.args._gameId.toNumber() == gameId) {
-          opponentBoardMatrix = events.args._gameBoard;
 
+          alert("DEBUG: merkle root " + events.args._merkleRoot);
           App.startBattleFase();
           alert("DEBUG: Creazione board battaglia");
         }
@@ -240,43 +278,116 @@ App = {
       return;
     }
 
-    if (myBoardMatrix[cell.dataset.row][cell.dataset.col] === 0) {
-      // Inserisci la nave nella posizione
+    if (myBoardMatrix[cell.dataset.row][cell.dataset.col] == 0) {
+      //alert("DEBUG: AGGIUNGO NAVE, Nave numero " + shipPlaced + " su " + shipNumber);
+      // insert the ship in the position
       cell.classList.add('ship');
-      $('#messageInfo').text("Nave posizionata!");
+      $('#messageInfo').text("Ship placed!");
       myBoardMatrix[cell.dataset.row][cell.dataset.col] = 1;
       shipPlaced++;
-      alert("DEBUG: AGGIUNGO NAVE, Nave numero " + shipPlaced + " su " + shipNumber);
     } else {
-      // Rimuovi la nave se è già presente nella posizione
+      //alert("DEBUG: RIMUOVO NAVE, Nave numero " + shipPlaced + " su " + shipNumber + ", valore=" + myBoardMatrix[cell.dataset.row][cell.dataset.col]);
+      // remove the ship if already present
       cell.classList.remove('ship');
-      $('#messageInfo').text("Nave rimossa!");
+      $('#messageInfo').text("Ship removed!");
       myBoardMatrix[cell.dataset.row][cell.dataset.col] = 0;
       shipPlaced--;
-      alert("DEBUG: RIMUOVO NAVE, Nave numero " + shipPlaced + " su " + shipNumber);
     }
 
     if (shipPlaced == shipNumber) {
-      $('#messageInfo').text("Tutte le navi inserite!");
+      //alert("All the ship placed!");
+      $('#messageInfo').text("All the ship placed");
       const submit = document.getElementById('submitBtn');
       submit.addEventListener("click", () => App.submitBoard());
     }
   },
 
   submitBoard: function () {
-    if(shipPlaced != shipNumber){
+    if (shipPlaced != shipNumber) {
       alert("Please place " + shipNumber + " ship!");
       return;
     }
 
     App.contracts.BattleShipGame.deployed().then(async function (instance) {
       newInstance = instance
-      return newInstance.submitBoard(gameId, myBoardMatrix);
+      return newInstance.submitBoard(gameId, 0);
     }).then(async function (logArray) {
       $('#posFase').hide();
+      App.handleEvents();
     }).catch(function (err) {
       console.error(err);
     });
+  },
+
+  createMerkleTree: async function () {
+    var boardArray = [];
+
+    for (let i = 0; i < boardSize; i++) {
+      for (let j = 0; j < boardSize; j++) {
+        boardArray.push(myBoardMatrix[i][j]);
+      }
+    }
+
+    var hashedArray = [];
+    for (let i = 0; i < boardArray.length; i++) {
+      hashedArray.push(window.web3Utils.keccak256(boardArray[i] + Math.floor(Math.random() * 10)));
+    }
+
+    merkleProofMatrix.push(hashedArray);
+
+    var tmpArray = [];
+
+    while (true) {
+      tmpArray = [];
+
+      for (let i = 0; i < hashedArray.length; i = i + 2) {
+        if (i + 1 < hashedArray.length) {
+          tmpArray.push(window.web3Utils.keccak256(App.xor(hashedArray[i], hashedArray[i + 1])));
+        }
+      }
+
+      hashedArray = tmpArray;
+      merkleProofMatrix.push(hashedArray);
+      if (tmpArray.length == 1 || tmpArray.length == 0) {
+        return tmpArray[0];
+      }
+    }
+  },
+
+  merkleProof: function (row, col) {
+    var merkleProof = [];
+    let flatIndex = row * boardDim + col;
+    merkleProofMatrix.forEach(arr => {
+      if (arr.length > 1) {
+        if (flatIndex % 2 == 0) {
+          merkleProof.push((arr[flatIndex + 1]).toString());
+          flatIndex = flatIndex / 2;
+        } else {
+          merkleProof.push((arr[flatIndex - 1]).toString());
+          flatIndex = (flatIndex - 1) / 2;
+        }
+      }
+
+    });
+
+    return merkleProof;
+  },
+
+  merkleProofAttack: function (attackRes, hash, merkleProof) {
+    App.contracts.Battleship.deployed().then(function (instance) {
+      battleshipInstance = instance;
+      return battleshipInstance.MerkleProofAttack(gameId, attackRes.toString(), hash, merkleProof);
+    }).then(function (reciept) {
+    }).catch(function (err) {
+      console.error(err);
+    });
+  },
+
+  xor: function (a, b) {
+    var BN = window.web3Utils.BN;
+    let c = new BN(a.slice(2), 16).xor(new BN(b.slice(2), 16)).toString(16);
+    result = "0x" + c.padStart(64, "0");
+    return result;
   },
 
   startBattleFase: function () {
@@ -319,11 +430,11 @@ App = {
     );
     const battleInfo = document.getElementById('battleInfo');
 
-    if (boardMatrix[cellRow][cellCol] === 0) {
+    if (opponentBoardMatrix[cellRow][cellCol] === 0) {
       cell.innerHTML = "✖";
       battleInfo.classList.remove("hit");
       battleInfo.textContent = "Missed shot.";
-    } else if (boardMatrix[cellRow][cellCol] !== 0) {
+    } else if (opponentBoardMatrix[cellRow][cellCol] !== 0) {
       cell.innerHTML = '💥'
       battleInfo.textContent = "Shot hit!";
     }
