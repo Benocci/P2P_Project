@@ -54,8 +54,30 @@ contract BattleShipGame {
     }
 
     // function to remove an element of the array avaibleGame
-    function removeFromArray(uint256 index) public {
-        delete avaibleGame[index]; // TODO make a pop function tu extract the first element of the array
+    function removeFromArray(uint256 _gameId) public {
+        uint256 index;
+        bool find = false;
+
+        for (uint i = 0; i < avaibleGame.length ; i++){
+            if(avaibleGame[i] == _gameId){
+                index = i;
+                find = true;
+                break;
+            }
+        }
+
+        if (!find || index >= avaibleGame.length){
+            return;
+        }
+
+        for (uint i = index; i<avaibleGame.length-1; i++){
+            avaibleGame[i] = avaibleGame[i+1];
+        }
+        delete avaibleGame[avaibleGame.length-1];
+    }
+
+    function getRandomNumber(uint256 bound) private view returns (uint256) {
+        return uint256(keccak256(abi.encodePacked(block.timestamp, msg.sender))) % bound;
     }
 
     // function to get the gameId of an avaible game
@@ -64,15 +86,9 @@ contract BattleShipGame {
             return 0;
         }
 
-        for (uint256 i = 0; i < avaibleGame.length; i++) {
-            randGameId = avaibleGame[i];
-            if (randGameId != 0) {
-                removeFromArray(i);
-                return randGameId;
-            }
-        }
-
-        return 0;
+        randGameId = avaibleGame[getRandomNumber(avaibleGame.length)];
+        removeFromArray(randGameId);
+        return randGameId;
     }
 
     function createGame(
@@ -108,12 +124,11 @@ contract BattleShipGame {
         } else {
             //specific game
             chosenGameId = _gameId;
+            removeFromArray(chosenGameId);
+        }
 
-            for (uint256 i = 0; i < avaibleGame.length; i++) {
-                if (avaibleGame[i] == chosenGameId) {
-                    removeFromArray(i);
-                }
-            }
+        if(chosenGameId <= 0){
+            revert OutputError({myError: "Chosen id negative!"});
         }
 
         if (gameList[chosenGameId].joiner != address(0)) {
@@ -122,7 +137,7 @@ contract BattleShipGame {
         gameList[chosenGameId].joiner = msg.sender;
 
         emit GameJoined(
-            _gameId,
+            chosenGameId,
             gameList[chosenGameId].creator,
             gameList[chosenGameId].joiner,
             gameList[chosenGameId].boardSize,
@@ -134,6 +149,7 @@ contract BattleShipGame {
     function amountEthDecision(uint256 _gameId, bool _response) public {
         if (!_response) {
             gameList[_gameId].joiner = address(0);
+            avaibleGame.push(_gameId);
         }
 
         emit AmountEthResponse(

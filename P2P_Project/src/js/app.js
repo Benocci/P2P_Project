@@ -180,7 +180,6 @@ App = {
         }
       }
 
-
       App.showAcceptEthAmount();
     }).catch(function (err) {
       console.error(err);
@@ -189,7 +188,8 @@ App = {
 
   showAcceptEthAmount: function () {
     $('#joinSpecificGame').hide();
-    $('#acceptAmountText').text("To start the game you have to bet this amount of Ethereum: " + ethAmmount + ".")
+    $('#createOrJoin').hide();
+    $('#acceptAmountText').text("To start the game with id " + gameId + " you have to bet this amount of Ethereum: " + ethAmmount + ".")
     $('#acceptAmount').show();
   },
 
@@ -219,6 +219,10 @@ App = {
     await newInstance.allEvents(
       (err, events) => {
         if (events.event == "AmountEthResponse" && events.args._gameId.toNumber() == gameId) {
+          if(events.args._response){
+            return App.handleEvents();
+          }
+
           $('#posFase').show();
           $('#acceptAmount').hide();
           $('#waitingOpponent').hide();
