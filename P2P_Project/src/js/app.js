@@ -64,7 +64,9 @@ App = {
   },
 
   backToMainMenu: function () { // function for back to the menu
+    // show the main menu:
     $('#createOrJoin').show();
+    // hide all the remaining parts:
     $('#setUpNewGame').hide();
     $('#joinSpecificGame').hide();
     $('#waitingOpponent').hide();
@@ -101,7 +103,7 @@ App = {
         return;
       }
 
-
+      // call to the contract
       App.contracts.BattleShipGame.deployed().then(async function (instance) {
         newInstance = instance
         return newInstance.createGame(boardSize, shipNumber, ethAmmount);
@@ -117,6 +119,7 @@ App = {
           $('#waitingOpponentConnection').text("Creation of a board of size " + boardSize + " with " + shipNumber + " ships and amount of ETH equal to " + ethAmmount + ".\n" +
             "Waiting for an opponents! The Game ID is " + gameId + "!");
 
+          // board matrix initialization
           myBoardMatrix = [];
 
           for (var i = 0; i < boardSize; i++) {
@@ -135,6 +138,7 @@ App = {
             }
           }
 
+          // waiting for the opponent:
           App.handleEvents();
         }
       }).catch(function (err) {
@@ -161,6 +165,7 @@ App = {
       boardSize = logArray.logs[0].args._boardSize.toNumber();
       shipNumber = logArray.logs[0].args._shipNum.toNumber();
 
+      // board inizialization:
       myBoardMatrix = [];
 
       for (var i = 0; i < boardSize; i++) {
@@ -180,6 +185,7 @@ App = {
         }
       }
 
+      // accept Ethereum amount:
       App.showAcceptEthAmount();
     }).catch(function (err) {
       console.error(err);
@@ -193,7 +199,8 @@ App = {
     $('#acceptAmount').show();
   },
 
-  acceptEthAmount: function () {
+
+  acceptEthAmount: function () { // function to accept the ethereum amount
     App.contracts.BattleShipGame.deployed().then(async function (instance) {
       newInstance = instance
       return newInstance.amountEthDecision(gameId, true);
@@ -204,7 +211,7 @@ App = {
     });
   },
 
-  refuseEthAmount: function () {
+  refuseEthAmount: function () { // function to refuse the ethereum amount
     App.contracts.BattleShipGame.deployed().then(async function (instance) {
       newInstance = instance
       return newInstance.amountEthDecision(gameId, false);
@@ -215,14 +222,17 @@ App = {
     });
   },
 
-  handleEvents: async function () {
+
+  handleEvents: async function () { // function to handle the event received from an opponent
     await newInstance.allEvents(
       (err, events) => {
+
         if (events.event == "AmountEthResponse" && events.args._gameId.toNumber() == gameId) {
-          if(events.args._response){
+          if(events.args._response){ // the opponent have refuse the ethereum amount
             return App.handleEvents();
           }
 
+          // start placement fase:
           $('#posFase').show();
           $('#acceptAmount').hide();
           $('#waitingOpponent').hide();
@@ -240,10 +250,12 @@ App = {
       });
   },
 
-  createBoardTable: function () {
+  createBoardTable: function () { // function to create a board for the placement fase
+    // get the div "gameBoard" and add the template size
     const board = document.getElementById('gameBoard');
     board.style = "grid-template-columns: 40px repeat(" + boardSize + ", 1fr);grid-template-rows: 40px repeat(" + boardSize + ", 1fr);"
 
+    // creation of the header colum:
     for (let j = 0; j <= boardSize; j++) {
       const headerCell = document.createElement("div");
       headerCell.classList.add("header-cell");
@@ -254,12 +266,14 @@ App = {
     }
 
     for (let i = 0; i < boardSize; i++) {
+      // creation of the header row
       const headerCell = document.createElement("div");
       headerCell.classList.add("header-cell");
       headerCell.textContent = i + 1;
 
       board.appendChild(headerCell);
 
+      // creation of the board with placing button
       for (let j = 0; j < boardSize; j++) {
         const cell = document.createElement("div");
         cell.classList.add("my-cell");
@@ -271,7 +285,7 @@ App = {
     }
   },
 
-  placeShip: function (event) {
+  placeShip: function (event) { // function to add a ship in a specific position of the board
     const cellRow = event.target.dataset.row;
     const cellCol = event.target.dataset.col;
     const cell = document.querySelector(
@@ -298,6 +312,7 @@ App = {
       shipPlaced--;
     }
 
+    // when all the ship are placed, submit button enable
     if (shipPlaced == shipNumber) {
       //alert("All the ship placed!");
       $('#messageInfo').text("All the ship placed");
@@ -306,7 +321,7 @@ App = {
     }
   },
 
-  submitBoard: function () {
+  submitBoard: function () { // function tu submit the board to the opponent
     if (shipPlaced != shipNumber) {
       alert("Please place " + shipNumber + " ship!");
       return;

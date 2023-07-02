@@ -58,6 +58,7 @@ contract BattleShipGame {
         uint256 index;
         bool find = false;
 
+        // loop the avaible game until find the index of the chosen one
         for (uint i = 0; i < avaibleGame.length ; i++){
             if(avaibleGame[i] == _gameId){
                 index = i;
@@ -70,10 +71,10 @@ contract BattleShipGame {
             return;
         }
 
-        for (uint i = index; i<avaibleGame.length-1; i++){
+        for (uint i = index; i<avaibleGame.length-1; i++){ // move manually all the element
             avaibleGame[i] = avaibleGame[i+1];
         }
-        delete avaibleGame[avaibleGame.length-1];
+        delete avaibleGame[avaibleGame.length-1]; // remove the last element
     }
 
     function getRandomNumber(uint256 bound) private view returns (uint256) {
@@ -91,7 +92,7 @@ contract BattleShipGame {
         return randGameId;
     }
 
-    function createGame(
+    function createGame( // function to create a new game
         uint256 _boardSize,
         uint256 _shipNum,
         uint256 _ethAmount
@@ -110,8 +111,8 @@ contract BattleShipGame {
         emit GameCreated(newGameId);
     }
 
-    function joinGame(uint256 _gameId) public {
-        // join a new game
+    function joinGame(uint256 _gameId) public { // function to join a game
+        // check if there are avaible game
         if (avaibleGame.length < 1) {
             revert OutputError({myError: "No open games!"});
         }
@@ -146,8 +147,8 @@ contract BattleShipGame {
         );
     }
 
-    function amountEthDecision(uint256 _gameId, bool _response) public {
-        if (!_response) {
+    function amountEthDecision(uint256 _gameId, bool _response) public { // function to accept or refuse the eth amount
+        if (!_response) { // refuse response
             gameList[_gameId].joiner = address(0);
             avaibleGame.push(_gameId);
         }
