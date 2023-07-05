@@ -9,6 +9,7 @@ contract BattleShipGame {
         uint256 boardSize;
         uint256 shipNum;
         uint256 ethAmount;
+        uint256 merkleRoot;
     }
 
     mapping(uint256 => gameInfo) public gameList; // map of game's ID (gameId => information of that game)
@@ -40,9 +41,8 @@ contract BattleShipGame {
         bool response
     );
 
-    event SubmitBoard(
-        uint256 indexed _gameId,
-        uint256 _merkleRoot
+    event StartGame(
+        uint256 indexed _gameId
     );
 
     constructor() {}
@@ -105,7 +105,8 @@ contract BattleShipGame {
             address(0),
             _boardSize,
             _shipNum,
-            _ethAmount
+            _ethAmount,
+            0
         );
         avaibleGame.push(newGameId);
         emit GameCreated(newGameId);
@@ -162,9 +163,20 @@ contract BattleShipGame {
     }
 
     function submitBoard(uint256 _gameId, uint256 _merkleRoot) public {
-        emit SubmitBoard(
-            _gameId,
-            _merkleRoot
+        //TODO: check
+        if(_gameId <= 0){
+            revert OutputError({myError: "Game id is negative!"});
+        }
+
+        if(gameList[_gameId].creator == msg.sender || gameList[_gameId].joiner == msg.sender){
+            gameList[_gameId].merkleRoot = _merkleRoot; 
+        }
+        else{
+            revert OutputError({myError: "Player not in that game!"});
+        }
+        
+        emit StartGame(
+            _gameId
         );
     }
 }

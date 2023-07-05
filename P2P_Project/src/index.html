@@ -58,10 +58,10 @@
   <div id="joinSpecificGame" hidden class="form-start">
     <div id="selectedGameIdDiv">
       <h2>Insert the game id or leave the input box clear to join a random game!</h2>
-      <input type="number" id="selectedGameId" min="0" placeholder="Insert here the game Id">
-      <button id="backToMenuBtn" type="button" class="btn btn-primary btn-lg">Click here to back to the main menu</button>
-      <button id="joinGameIdBtn" type="button" class="btn btn-primary btn-lg">Join the game</button>
+      <input class="form-type-number" type="number" id="selectedGameId" min="0" placeholder="Insert here the game Id">
     </div>
+    <button id="backToMenuBtn" type="button" class="btn btn-primary btn-lg">Back to the main menu</button>
+    <button id="joinGameIdBtn" type="button" class="btn btn-primary btn-lg">Join the game</button>
   </div>
 
   <!-- Menu for set the dimension of the board, the number of ships and the amount of Ethereum -->
@@ -69,15 +69,15 @@
 
     <div id="boardSizeDiv">
       <h2>Choose the dimension of the board:</h2>
-      <input required type="number" id="boardSize" value="6">
+      <input required class="form-type-number" type="number" id="boardSize" value="6">
     </div>
     <div id="shipDiv">
       <h2>Choose the number of ships:</h2>
-      <input required type="number" id="shipNumber" value="3">
+      <input required class="form-type-number" type="number" id="shipNumber" value="3">
     </div>
     <div id="ethAmmountDiv">
       <h2>Choose the ammount of ETH you want to bet in this game:</h2>
-      <input required type="number" id="ethAmmount" value="2">
+      <input required class="form-type-number" type="number" id="ethAmmount" value="2">
     </div>
 
     <div id="set-upButton">
@@ -89,8 +89,10 @@
   <!-- Menu for wait the opponent after create a game -->
   <div id="waitingOpponent" hidden class="form-start">
     <div>
-      <h2 id="waitingOpponentTitle"> Welcome to Battleship Game Ethereum!</h2>
-      <h2 id="waitingOpponentConnection">Loading..</h2>
+      <div id="waitingOpponentConnection">
+        <h2 id="waitingOpponentTitle"> Welcome to Battleship Game Ethereum!</h2>
+        <h2>Loading..</h2>
+      </div>
     </div>
   </div>
 
@@ -114,6 +116,10 @@
     </div>
 
     <button id="submitBtn" type="button" class="btn btn-primary btn-lg">Submit your board!</button>
+  </div>
+
+  <div id="waitToStart" class="col" hidden>
+    <h1>Wait for your opponent to start!</h1>
   </div>
 
   <!-- Game board - battle fase -->

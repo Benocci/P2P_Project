@@ -116,8 +116,8 @@ App = {
           // waiting room:
           $('#setUpNewGame').hide();
           $('#waitingOpponent').show();
-          $('#waitingOpponentConnection').text("Creation of a board of size " + boardSize + " with " + shipNumber + " ships and amount of ETH equal to " + ethAmmount + ".\n" +
-            "Waiting for an opponents! The Game ID is " + gameId + "!");
+          document.getElementById('waitingOpponentConnection').innerHTML = "<h2>Creation of a board of size " + boardSize + " with " + shipNumber + " ships.</h2><h2>The amount of ETH is equal to " + ethAmmount + ".</h2>" +
+            "<h2>Waiting for an opponents! The Game ID is " + gameId + "!</h2>";
 
           // board matrix initialization
           myBoardMatrix = [];
@@ -240,7 +240,8 @@ App = {
           App.createBoardTable();
           //alert("DEBUG: Creazione board piazzamento");
         }
-        else if (events.event == "SubmitBoard" && events.args._gameId.toNumber() == gameId) {
+        else if (events.event == "StartGame" && events.args._gameId.toNumber() == gameId) {
+          
 
           alert("DEBUG: merkle root " + events.args._merkleRoot);
           App.startBattleFase();
@@ -327,11 +328,17 @@ App = {
       return;
     }
 
+    merkleProofMatrix[0] = App.createMerkleTree()
+
+    alert("DEBUG: sottomissione board");
     App.contracts.BattleShipGame.deployed().then(async function (instance) {
       newInstance = instance
-      return newInstance.submitBoard(gameId, 0);
+      return newInstance.submitBoard(gameId, merkleProofMatrix[0]);
     }).then(async function (logArray) {
+      alert("DEBUG: wating room");
+
       $('#posFase').hide();
+      $('#waitToStart').show();
       App.handleEvents();
     }).catch(function (err) {
       console.error(err);
@@ -444,7 +451,9 @@ App = {
   handleCellClick: function (event) {
     const cellRow = event.target.dataset.row;
     const cellCol = event.target.dataset.col;
-    const cell = document.querySelector(
+    
+    
+    /*const cell = document.querySelector(
       `div.opponent-cell[data-row='${cellRow}'][data-col='${cellCol}']`
     );
     const battleInfo = document.getElementById('battleInfo');
@@ -457,6 +466,7 @@ App = {
       cell.innerHTML = '💥'
       battleInfo.textContent = "Shot hit!";
     }
+    */
   }
 };
 

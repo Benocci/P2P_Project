@@ -35,8 +35,33 @@ h1 {
   margin-left: 80px;
 }
 
+.form-type-number {
+  position: relative;
+  height: 50px;
+}
+input {
+  color: hsl(221, 100%, 50%);
+  appearance: none;
+  position: absolute;
+  top: 0;
+  display: block;
+  width: 40%;
+  height: 50px;
+  margin: auto;
+  text-align: center;
+  font-size: 1.1em;
+  font-weight: 500;
+  background-color: lightblue;
+  border-radius: 40px;
+  border: none;
+}
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+-webkit-appearance: none;
+}
+
 .form-start {
-  color: rgb(255, 255, 255);
+  color: hsl(221, 100%, 50%);
   text-transform: capitalize;
   text-align: center;
   font-size: 1.3em;
