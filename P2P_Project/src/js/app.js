@@ -233,7 +233,7 @@ App = {
           }
 
           // start placement fase:
-          $('#posFase').show();
+          $('#gameFase').show();
           $('#acceptAmount').hide();
           $('#waitingOpponent').hide();
 
@@ -316,7 +316,6 @@ App = {
     // when all the ship are placed, submit button enable
     if (shipPlaced == shipNumber) {
       //alert("All the ship placed!");
-      $('#messageInfo').text("All the ship placed");
       const submit = document.getElementById('submitBtn');
       submit.addEventListener("click", () => App.submitBoard());
     }
@@ -327,22 +326,26 @@ App = {
       alert("Please place " + shipNumber + " ship!");
       return;
     }
-
-    merkleProofMatrix[0] = App.createMerkleTree()
+/*
+    var merkleRoot = App.createMerkleTree()
 
     alert("DEBUG: sottomissione board");
     App.contracts.BattleShipGame.deployed().then(async function (instance) {
       newInstance = instance
-      return newInstance.submitBoard(gameId, merkleProofMatrix[0]);
+      return newInstance.submitBoard(gameId, merkleRoot);
     }).then(async function (logArray) {
       alert("DEBUG: wating room");
 
-      $('#posFase').hide();
-      $('#waitToStart').show();
+      $('#messageInfo').text("Game started!");
       App.handleEvents();
     }).catch(function (err) {
       console.error(err);
     });
+*/
+  $('#messageInfo').text("Game started!");
+    $('#opponentBoard').show();
+    $('#submitBtn').hide();
+    App.startBattleFase();
   },
 
   createMerkleTree: async function () {
@@ -417,7 +420,6 @@ App = {
   },
 
   startBattleFase: function () {
-    $('battleFase').show();
     const board = document.getElementById('battleGameBoard');
     board.style = "grid-template-columns: 40px repeat(" + boardSize + ", 1fr);grid-template-rows: 40px repeat(" + boardSize + ", 1fr);"
 
@@ -453,7 +455,7 @@ App = {
     const cellCol = event.target.dataset.col;
     
     
-    /*const cell = document.querySelector(
+    const cell = document.querySelector(
       `div.opponent-cell[data-row='${cellRow}'][data-col='${cellCol}']`
     );
     const battleInfo = document.getElementById('battleInfo');
@@ -466,7 +468,6 @@ App = {
       cell.innerHTML = '💥'
       battleInfo.textContent = "Shot hit!";
     }
-    */
   }
 };
 

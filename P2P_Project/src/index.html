@@ -81,7 +81,7 @@
     </div>
 
     <div id="set-upButton">
-      <button id="backToMenuBtn" type="button" class="btn btn-primary btn-lg">Click here to back to the main menu</button>
+      <button id="backToMenuBtn" type="button" class="btn btn-primary btn-lg">Back to the main menu</button>
       <button id="createGameBtn" type="button" class="btn btn-primary btn-lg">Create a new game!</button>
     </div>
   </div>
@@ -99,38 +99,32 @@
   <!-- Menu for accept the Ethereum amount of a joined game -->
   <div id="acceptAmount" hidden class="form-start">
     <h2 id="acceptAmountText">Loading...</h2>
-    <button id="acceptAmountBtn" type="button" class="btn btn-primary btn-lg">Accept the Ethereum amount!</button>
     <button id="refuseAmountBtn" type="button" class="btn btn-primary btn-lg">Quit this game!</button>
+    <button id="acceptAmountBtn" type="button" class="btn btn-primary btn-lg">Accept the Ethereum amount!</button>
   </div>
 
   <!-- BEGIN GAME SETTING -->
 
-  <!-- Game board - positioning fase -->
-  <div id="posFase" class="posFase" hidden>
+  <div id="gameFase" hidden>
     <div class="form-start">
       <h2 id="messageInfo">Place the ships!</h2>
     </div>
-
-    <div class="container">
-      <div id="gameBoard" class="game-board"></div>
+    <div class="parent">
+      <div class="child"> <!-- Game board - positioning fase -->
+        <div class="form-board">
+          <h3>Your board!</h3>
+        </div>
+        <div id="gameBoard" class="game-board"></div>
+      </div>
+    
+      <div class="child"> <!-- Game board - battle fase -->
+        <div class="form-board" hidden id="opponentBoard">
+          <h3>Opponent board!</h3>
+        </div>
+        <div id="battleGameBoard" class="game-board"></div>
+      </div>
     </div>
-
     <button id="submitBtn" type="button" class="btn btn-primary btn-lg">Submit your board!</button>
-  </div>
-
-  <div id="waitToStart" class="col" hidden>
-    <h1>Wait for your opponent to start!</h1>
-  </div>
-
-  <!-- Game board - battle fase -->
-  <div id="battleFase" hidden>
-    <div class="form-start">
-      <h2 id="battleInfo">Click a position on the board to shoot!</h2>
-    </div>
-
-    <div class="container">
-      <div id="battleGameBoard" class="game-board"></div>
-    </div>
   </div>
 
   <!-- SCRIPT -->
