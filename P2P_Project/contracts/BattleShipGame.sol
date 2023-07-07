@@ -47,6 +47,7 @@ contract BattleShipGame {
 
     event ShootShip(
         uint256 indexed _gameId,
+        address _address,
         uint256 _row,
         uint256 _col
     );
@@ -198,8 +199,18 @@ contract BattleShipGame {
             revert OutputError({myError: "Game id is negative!"});
         }
 
+        address opponentAddress;
+
+        if(msg.sender == gameList[_gameId].creator){
+            opponentAddress = gameList[_gameId].joiner;
+        }
+        else{
+            opponentAddress = gameList[_gameId].creator;
+        }
+
         emit ShootShip(
             _gameId,
+            opponentAddress,
             _row,
             _col
         );

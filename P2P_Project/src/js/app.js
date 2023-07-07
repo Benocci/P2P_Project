@@ -8,6 +8,8 @@ var merkleProofMatrix = [];
 var myBoardMatrix = null;
 var iHostTheGame = null;
 var isMyTurn = null;
+var attackRow = null;
+var attackCol = null;
 
 App = {
   web3Provider: null,
@@ -224,38 +226,38 @@ App = {
           App.createBoardTable();
           //alert("DEBUG: Creazione board piazzamento");
         }
-        else if (events.event == "ShootShip" && events.args._gameId.toNumber() == gameId) {
+        else if (events.event == "ShootShip" && events.args._gameId.toNumber() == gameId && events.args._address == web3.eth.defaultAccount) {
           const cellRow = events._args._row.toNumber();
           const cellCol = events._args._col.toNumber();
           const battleInfo = document.getElementById('battleInfo');
+
+          alert("DEBUG: SPARO RICEVUTO SU [" + cellRow + "][" + cellCol + "]");
 
           const cell = document.querySelector(
             `div.my-cell[data-row='${cellRow}'][data-col='${cellCol}']`
           );
 
+          var hit;
           if (myBoardMatrix[cellRow][cellCol] === 0) {
-            App.contracts.BattleShipGame.deployed().then(async function (instance) {
-              newInstance = instance
-              return newInstance.shootResult(gameId, cellRow, cellCol, false);
-            }).then(async function (logArray) {
-              cell.innerHTML = "✖";
-              battleInfo.classList.remove("hit");
-              battleInfo.textContent = "Your opponent miss the shot.";
-            }).catch(function (err) {
-              console.error(err);
-            });
+            cell.innerHTML = "✖";
+            battleInfo.classList.remove("hit");
+            battleInfo.textContent = "Your opponent miss the shot.";
+            hit = false;
           }
           else if (myBoardMatrix[cellRow][cellCol] !== 0) {
-            App.contracts.BattleShipGame.deployed().then(async function (instance) {
-              newInstance = instance
-              return newInstance.shootResult(gameId, cellRow, cellCol, true);
-            }).then(async function (logArray) {
-              cell.innerHTML = '💥'
-              battleInfo.textContent = "Your opponent hit the shot!";
-            }).catch(function (err) {
-              console.error(err);
-            });
+            cell.innerHTML = '💥'
+            battleInfo.textContent = "Your opponent hit the shot!";
+            hit = true;
           }
+
+          App.contracts.BattleShipGame.deployed().then(async function (instance) {
+            newInstance = instance
+            return newInstance.shootResult(gameId, cellRow, cellCol, hit);
+          }).then(async function (logArray) {
+            isMyTurn = true;
+          }).catch(function (err) {
+            console.error(err);
+          });
         }
         else if (events.event == "ShootResult" && events.args._gameId.toNumber() == gameId) {
           const cellRow = events._args._row.toNumber();
@@ -266,27 +268,14 @@ App = {
           );
 
           if (events.args._result === 0) {
-            App.contracts.BattleShipGame.deployed().then(async function (instance) {
-              newInstance = instance
-              return newInstance.shootResult(gameId, 0);
-            }).then(async function (logArray) {
-              cell.innerHTML = "✖";
-              battleInfo.classList.remove("hit");
-              battleInfo.textContent = "You miss the shot.";
-            }).catch(function (err) {
-              console.error(err);
-            });
+            cell.innerHTML = "✖";
+            battleInfo.classList.remove("hit");
+            battleInfo.textContent = "You miss the shot.";
           } else if (events.args._result !== 0) {
-            App.contracts.BattleShipGame.deployed().then(async function (instance) {
-              newInstance = instance
-              return newInstance.shootResult(gameId, 0);
-            }).then(async function (logArray) {
-              cell.innerHTML = '💥'
-              battleInfo.textContent = "You hit the shot!";
-            }).catch(function (err) {
-              console.error(err);
-            });
+            cell.innerHTML = '💥'
+            battleInfo.textContent = "You hit the shot!";
           }
+          isMyTurn = false;
         }
 
       });
@@ -497,53 +486,25 @@ App = {
         board.appendChild(cell);
       }
     }
+
+    App.handleEvents();
   },
 
   handleCellClick: function (event) {
-    const cellRow = event.target.dataset.row;
-    const cellCol = event.target.dataset.col;
+    var cellRow = event.target.dataset.row;
+    var cellCol = event.target.dataset.col;
 
     if (!isMyTurn) {
       alert("It is the opponent turn, please wait for him!");
       return;
     }
 
-    App.contracts.Battleship.deployed().then(function (instance) {
-      battleshipInstance = instance;
-      return battleshipInstance.shoot(gameId, cellRow, cellCol);
+    alert("You shoot the cell [" + cellRow + "][" + cellCol + "]");
+
+    App.contracts.BattleShipGame.deployed().then(async function (instance) {
+      newInstance = instance
+      return newInstance.shoot(gameId, cellRow, cellCol);
     }).then(function (reciept) {
-      const cellRow = reciept._args._row.toNumber();
-      const cellCol = reciept._args._col.toNumber();
-      const battleInfo = document.getElementById('battleInfo');
-
-      const cell = document.querySelector(
-        `div.my-cell[data-row='${cellRow}'][data-col='${cellCol}']`
-      );
-
-      if (myBoardMatrix[cellRow][cellCol] === 0) {
-        App.contracts.BattleShipGame.deployed().then(async function (instance) {
-          newInstance = instance
-          return newInstance.shootResult(gameId, cellRow, cellCol, false);
-        }).then(async function (logArray) {
-          cell.innerHTML = "✖";
-          battleInfo.classList.remove("hit");
-          battleInfo.textContent = "Your opponent miss the shot.";
-        }).catch(function (err) {
-          console.error(err);
-        });
-      }
-      else if (myBoardMatrix[cellRow][cellCol] !== 0) {
-        App.contracts.BattleShipGame.deployed().then(async function (instance) {
-          newInstance = instance
-          return newInstance.shootResult(gameId, cellRow, cellCol, true);
-        }).then(async function (logArray) {
-          cell.innerHTML = '💥'
-          battleInfo.textContent = "Your opponent hit the shot!";
-        }).catch(function (err) {
-          console.error(err);
-        });
-      }
-      isMyTurn = false;
       App.handleEvents();
     }).catch(function (err) {
       console.error(err);
