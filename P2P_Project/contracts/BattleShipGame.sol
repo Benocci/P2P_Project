@@ -45,6 +45,19 @@ contract BattleShipGame {
         uint256 indexed _gameId
     );
 
+    event ShootShip(
+        uint256 indexed _gameId,
+        uint256 _row,
+        uint256 _col
+    );
+
+    event ShootResult(
+        uint256 indexed _gameId,
+        uint256 _row,
+        uint256 _col,
+        bool _result
+    );
+
     constructor() {}
 
     // function to return the gameId
@@ -177,6 +190,31 @@ contract BattleShipGame {
         
         emit StartGame(
             _gameId
+        );
+    }
+
+    function shoot(uint256 _gameId, uint256 _row, uint256 _col) public {
+        if(_gameId <= 0){
+            revert OutputError({myError: "Game id is negative!"});
+        }
+
+        emit ShootShip(
+            _gameId,
+            _row,
+            _col
+        );
+    }
+
+    function shootResult(uint256 _gameId, uint256 _row, uint256 _col, bool _result) public {
+        if(_gameId <= 0){
+            revert OutputError({myError: "Game id is negative!"});
+        }
+        
+        emit ShootResult(
+            _gameId,
+            _row,
+            _col,
+            _result
         );
     }
 }
