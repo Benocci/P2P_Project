@@ -1,15 +1,16 @@
+// game variables:
 var gameId = null;
 var ethAmmount = null;
 var boardSize = null;
 var board = null;
 var shipNumber = null;
 var shipPlaced = 0;
+// game data structures:
 var merkleProofMatrix = [];
 var myBoardMatrix = null;
+// bool variable:
 var iHostTheGame = null;
 var isMyTurn = null;
-var attackRow = null;
-var attackCol = null;
 
 App = {
   web3Provider: null,
@@ -82,7 +83,7 @@ App = {
     $('#createOrJoin').hide();
   },
 
-  joinSpecificGame: function () { // function to show the join a speciic game menu
+  joinSpecificGame: function () { // function to show the join a specific game menu
     $('#joinSpecificGame').show();
     $('#createOrJoin').hide();
     $(document).on('click', '#joinGameIdBtn', App.joinGame);
@@ -178,10 +179,12 @@ App = {
     });
   },
 
-  showAcceptEthAmount: function () {
+  showAcceptEthAmount: function () { // function to show the information of the board to accept the game
     $('#joinSpecificGame').hide();
     $('#createOrJoin').hide();
-    $('#acceptAmountText').text("To start the game with id " + gameId + " you have to bet this amount of Ethereum: " + ethAmmount + ".")
+    document.getElementById('acceptAmountText').innerHTML = "<h2>Do you want to start the game with id " + gameId + "?</h2>" + 
+    "<h2>The board have a size equal to " + boardSize + " and " + shipNumber + " ships.</h2>" +
+    "<h2>The amount of ETH to bet is " + ethAmmount + " ETH.</h2>";
     $('#acceptAmount').show();
   },
 
@@ -224,14 +227,10 @@ App = {
           $('#waitingOpponent').hide();
 
           App.createBoardTable();
-          //alert("DEBUG: Creazione board piazzamento");
         }
         else if (events.event == "ShootShip" && events.args._gameId.toNumber() == gameId && events.args._address == web3.eth.defaultAccount) {
           const cellRow = events.args._row.toNumber();
           const cellCol = events.args._col.toNumber();
-
-          //alert("DEBUG: SPARO RICEVUTO SU [" + cellRow + "][" + cellCol + "]");
-
           const cell = document.querySelector(
             `div.my-cell[data-row='${cellRow}'][data-col='${cellCol}']`
           );
@@ -328,14 +327,12 @@ App = {
     }
 
     if (myBoardMatrix[cell.dataset.row][cell.dataset.col] == 0) {
-      //alert("DEBUG: AGGIUNGO NAVE, Nave numero " + shipPlaced + " su " + shipNumber);
       // insert the ship in the position
       cell.classList.add('ship');
       $('#messageInfo').text("Ship placed!");
       myBoardMatrix[cell.dataset.row][cell.dataset.col] = 1;
       shipPlaced++;
     } else {
-      //alert("DEBUG: RIMUOVO NAVE, Nave numero " + shipPlaced + " su " + shipNumber + ", valore=" + myBoardMatrix[cell.dataset.row][cell.dataset.col]);
       // remove the ship if already present
       cell.classList.remove('ship');
       $('#messageInfo').text("Ship removed!");
@@ -345,7 +342,6 @@ App = {
 
     // when all the ship are placed, submit button enable
     if (shipPlaced == shipNumber) {
-      //alert("All the ship placed!");
       const submit = document.getElementById('submitBtn');
       submit.addEventListener("click", () => App.submitBoard());
     }
@@ -357,7 +353,7 @@ App = {
       return;
     }
 
-    if (iHostTheGame) {
+    if (iHostTheGame) { // the creator of the game have the first move
       isMyTurn = true;
     }
     else {
@@ -366,7 +362,6 @@ App = {
 
     //var merkleRoot = App.createMerkleTree()
 
-    //alert("DEBUG: sottomissione board");
     App.contracts.BattleShipGame.deployed().then(async function (instance) {
       newInstance = instance
       return newInstance.submitBoard(gameId, 0);
@@ -384,6 +379,58 @@ App = {
       console.error(err);
     });
 
+  },
+
+  startBattleFase: function () { // function to show the opponentBoard and start the shoot fase
+    const board = document.getElementById('battleGameBoard');
+    board.style = "grid-template-columns: 40px repeat(" + boardSize + ", 1fr);grid-template-rows: 40px repeat(" + boardSize + ", 1fr);"
+
+    for (let j = 0; j <= boardSize; j++) {
+      const headerCell = document.createElement("div");
+      headerCell.classList.add("header-cell");
+      if (j > 0) {
+        headerCell.textContent = String.fromCharCode(64 + j);
+      }
+      board.appendChild(headerCell);
+    }
+
+    for (let i = 0; i < boardSize; i++) {
+      const headerCell = document.createElement("div");
+      headerCell.classList.add("header-cell");
+      headerCell.textContent = i + 1;
+
+      board.appendChild(headerCell);
+
+      for (let j = 0; j < boardSize; j++) {
+        const cell = document.createElement("div");
+        cell.classList.add("opponent-cell");
+        cell.dataset.row = i;
+        cell.dataset.col = j;
+        cell.addEventListener("click", (event) => App.handleCellClick(event));
+        board.appendChild(cell);
+      }
+    }
+
+    App.handleEvents();
+  },
+
+  handleCellClick: function (event) { // function to handle the shot on a cell
+    var cellRow = event.target.dataset.row;
+    var cellCol = event.target.dataset.col;
+
+    if (!isMyTurn) {
+      alert("It is the opponent turn, please wait for him!");
+      return;
+    }
+
+    App.contracts.BattleShipGame.deployed().then(async function (instance) {
+      newInstance = instance
+      return newInstance.shoot(gameId, cellRow, cellCol);
+    }).then(function (reciept) {
+      App.handleEvents();
+    }).catch(function (err) {
+      console.error(err);
+    });
   },
 
   createMerkleTree: async function () {
@@ -455,60 +502,6 @@ App = {
     let c = new BN(a.slice(2), 16).xor(new BN(b.slice(2), 16)).toString(16);
     result = "0x" + c.padStart(64, "0");
     return result;
-  },
-
-  startBattleFase: function () {
-    const board = document.getElementById('battleGameBoard');
-    board.style = "grid-template-columns: 40px repeat(" + boardSize + ", 1fr);grid-template-rows: 40px repeat(" + boardSize + ", 1fr);"
-
-    for (let j = 0; j <= boardSize; j++) {
-      const headerCell = document.createElement("div");
-      headerCell.classList.add("header-cell");
-      if (j > 0) {
-        headerCell.textContent = String.fromCharCode(64 + j);
-      }
-      board.appendChild(headerCell);
-    }
-
-    for (let i = 0; i < boardSize; i++) {
-      const headerCell = document.createElement("div");
-      headerCell.classList.add("header-cell");
-      headerCell.textContent = i + 1;
-
-      board.appendChild(headerCell);
-
-      for (let j = 0; j < boardSize; j++) {
-        const cell = document.createElement("div");
-        cell.classList.add("opponent-cell");
-        cell.dataset.row = i;
-        cell.dataset.col = j;
-        cell.addEventListener("click", (event) => App.handleCellClick(event));
-        board.appendChild(cell);
-      }
-    }
-
-    App.handleEvents();
-  },
-
-  handleCellClick: function (event) {
-    var cellRow = event.target.dataset.row;
-    var cellCol = event.target.dataset.col;
-
-    if (!isMyTurn) {
-      alert("It is the opponent turn, please wait for him!");
-      return;
-    }
-
-    //alert("You shoot the cell [" + cellRow + "][" + cellCol + "]");
-
-    App.contracts.BattleShipGame.deployed().then(async function (instance) {
-      newInstance = instance
-      return newInstance.shoot(gameId, cellRow, cellCol);
-    }).then(function (reciept) {
-      App.handleEvents();
-    }).catch(function (err) {
-      console.error(err);
-    });
   }
 };
 

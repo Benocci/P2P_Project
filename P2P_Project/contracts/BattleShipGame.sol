@@ -177,7 +177,7 @@ contract BattleShipGame {
         );
     }
 
-    function submitBoard(uint256 _gameId, uint256 _merkleRoot) public {
+    function submitBoard(uint256 _gameId, uint256 _merkleRoot) public { // function to submit the board
         //TODO: check
         if(_gameId <= 0){
             revert OutputError({myError: "Game id is negative!"});
@@ -195,13 +195,13 @@ contract BattleShipGame {
         );
     }
 
-    function shoot(uint256 _gameId, uint256 _row, uint256 _col) public {
+    function shoot(uint256 _gameId, uint256 _row, uint256 _col) public { // function to communicate the coordinates of the fired cell
         if(_gameId <= 0){
             revert OutputError({myError: "Game id is negative!"});
         }
 
+        // take the opponent address for comunicate who was shot
         address opponentAddress;
-
         if(msg.sender == gameList[_gameId].creator){
             opponentAddress = gameList[_gameId].joiner;
         }
@@ -217,13 +217,13 @@ contract BattleShipGame {
         );
     }
 
-    function shootResult(uint256 _gameId, uint256 _row, uint256 _col, uint256 _result) public {
+    function shootResult(uint256 _gameId, uint256 _row, uint256 _col, uint256 _result) public { // function to comunicate the result of the shot
         if(_gameId <= 0){
             revert OutputError({myError: "Game id is negative!"});
         }
         
+        // take the opponent address for comunicate who fired the shot
         address opponentAddress;
-
         if(msg.sender == gameList[_gameId].creator){
             opponentAddress = gameList[_gameId].joiner;
         }
