@@ -54,9 +54,10 @@ contract BattleShipGame {
 
     event ShootResult(
         uint256 indexed _gameId,
+        address _address,
         uint256 _row,
         uint256 _col,
-        bool _result
+        uint256 _result
     );
 
     constructor() {}
@@ -216,13 +217,23 @@ contract BattleShipGame {
         );
     }
 
-    function shootResult(uint256 _gameId, uint256 _row, uint256 _col, bool _result) public {
+    function shootResult(uint256 _gameId, uint256 _row, uint256 _col, uint256 _result) public {
         if(_gameId <= 0){
             revert OutputError({myError: "Game id is negative!"});
         }
         
+        address opponentAddress;
+
+        if(msg.sender == gameList[_gameId].creator){
+            opponentAddress = gameList[_gameId].joiner;
+        }
+        else{
+            opponentAddress = gameList[_gameId].creator;
+        }
+
         emit ShootResult(
             _gameId,
+            opponentAddress,
             _row,
             _col,
             _result

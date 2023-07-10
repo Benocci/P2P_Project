@@ -227,11 +227,10 @@ App = {
           //alert("DEBUG: Creazione board piazzamento");
         }
         else if (events.event == "ShootShip" && events.args._gameId.toNumber() == gameId && events.args._address == web3.eth.defaultAccount) {
-          const cellRow = events._args._row.toNumber();
-          const cellCol = events._args._col.toNumber();
-          const battleInfo = document.getElementById('battleInfo');
+          const cellRow = events.args._row.toNumber();
+          const cellCol = events.args._col.toNumber();
 
-          alert("DEBUG: SPARO RICEVUTO SU [" + cellRow + "][" + cellCol + "]");
+          //alert("DEBUG: SPARO RICEVUTO SU [" + cellRow + "][" + cellCol + "]");
 
           const cell = document.querySelector(
             `div.my-cell[data-row='${cellRow}'][data-col='${cellCol}']`
@@ -240,41 +239,42 @@ App = {
           var hit;
           if (myBoardMatrix[cellRow][cellCol] === 0) {
             cell.innerHTML = "✖";
-            battleInfo.classList.remove("hit");
-            battleInfo.textContent = "Your opponent miss the shot.";
-            hit = false;
+            $('#messageInfo').text("Your opponent miss the shot, it is your turn!");
+            hit = 0;
           }
           else if (myBoardMatrix[cellRow][cellCol] !== 0) {
-            cell.innerHTML = '💥'
-            battleInfo.textContent = "Your opponent hit the shot!";
-            hit = true;
+            cell.innerHTML = '💥';
+            $('#messageInfo').text("Your opponent hit the shot, it is your turn!");
+            hit = 1;
           }
+
+          isMyTurn = true;
 
           App.contracts.BattleShipGame.deployed().then(async function (instance) {
             newInstance = instance
             return newInstance.shootResult(gameId, cellRow, cellCol, hit);
           }).then(async function (logArray) {
-            isMyTurn = true;
           }).catch(function (err) {
             console.error(err);
           });
         }
-        else if (events.event == "ShootResult" && events.args._gameId.toNumber() == gameId) {
-          const cellRow = events._args._row.toNumber();
-          const cellCol = events._args._col.toNumber();
-          const battleInfo = document.getElementById('battleInfo');
+        else if (events.event == "ShootResult" && events.args._gameId.toNumber() == gameId  && events.args._address == web3.eth.defaultAccount) {
+          const cellRow = events.args._row.toNumber();
+          const cellCol = events.args._col.toNumber();
           const cell = document.querySelector(
             `div.opponent-cell[data-row='${cellRow}'][data-col='${cellCol}']`
           );
 
-          if (events.args._result === 0) {
+          var result = events.args._result.toNumber();
+
+          if (result === 0) {
             cell.innerHTML = "✖";
-            battleInfo.classList.remove("hit");
-            battleInfo.textContent = "You miss the shot.";
-          } else if (events.args._result !== 0) {
-            cell.innerHTML = '💥'
-            battleInfo.textContent = "You hit the shot!";
+            $('#messageInfo').text("You miss the shot, it is your opponent's turn!");
+          } else if (result !== 0) {
+            cell.innerHTML = '💥';
+            $('#messageInfo').text("You hit the shot, it is your opponent's turn!");
           }
+
           isMyTurn = false;
         }
 
@@ -372,7 +372,7 @@ App = {
       return newInstance.submitBoard(gameId, 0);
     }).then(async function (logArray) {
       if (isMyTurn) {
-        $('#messageInfo').text("Game started, is your turn!");
+        $('#messageInfo').text("Game started, it is your turn!");
       }
       else {
         $('#messageInfo').text("Game started, wait for opponent move!");
@@ -499,7 +499,7 @@ App = {
       return;
     }
 
-    alert("You shoot the cell [" + cellRow + "][" + cellCol + "]");
+    //alert("You shoot the cell [" + cellRow + "][" + cellCol + "]");
 
     App.contracts.BattleShipGame.deployed().then(async function (instance) {
       newInstance = instance
