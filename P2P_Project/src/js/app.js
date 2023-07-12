@@ -138,7 +138,8 @@ App = {
           App.handleEvents();
         }
       }).catch(function (err) {
-        console.error(err);
+        alert("ERROR: " + err.message);
+        console.log(err.message);
       });
     }
   },
@@ -175,7 +176,8 @@ App = {
       // accept Ethereum amount:
       App.showAcceptEthAmount();
     }).catch(function (err) {
-      console.error(err);
+      //alert("ERROR: " + err.message);
+      console.log(err.message);
     });
   },
 
@@ -196,7 +198,8 @@ App = {
     }).then(async function (logArray) {
       App.handleEvents();
     }).catch(function (err) {
-      console.error(err);
+      //alert("ERROR: " + err.message);
+      console.log(err.message);
     });
   },
 
@@ -207,16 +210,20 @@ App = {
     }).then(async function (logArray) {
       App.backToMainMenu();
     }).catch(function (err) {
-      console.error(err);
+      //alert("ERROR: " + err.message);
+      console.log(err.message);
     });
   },
 
 
   handleEvents: async function () { // function to handle the event received from an opponent
+    let lastBlock = null;
+    
     await newInstance.allEvents(
       (err, events) => {
 
-        if (events.event == "AmountEthResponse" && events.args._gameId.toNumber() == gameId) {
+        if (events.event == "AmountEthResponse" && events.args._gameId.toNumber() == gameId && events.blockNumber != lastBlock) {
+          lastBlock = events.blockNumber;
           if (events.args._response) { // the opponent have refuse the ethereum amount
             return App.handleEvents();
           }
@@ -228,7 +235,9 @@ App = {
 
           App.createBoardTable();
         }
-        else if (events.event == "ShootShip" && events.args._gameId.toNumber() == gameId && events.args._address == web3.eth.defaultAccount) {
+        else if (events.event == "ShootShip" && events.args._gameId.toNumber() == gameId && events.args._address == web3.eth.defaultAccount  && events.blockNumber != lastBlock) {
+          lastBlock = events.blockNumber;
+          
           const cellRow = events.args._row.toNumber();
           const cellCol = events.args._col.toNumber();
           const cell = document.querySelector(
@@ -245,19 +254,23 @@ App = {
             cell.innerHTML = '💥';
             $('#messageInfo').text("Your opponent hit the shot, it is your turn!");
             hit = 1;
+            myShipsHitted++;
           }
-
-          isMyTurn = true;
+          
 
           App.contracts.BattleShipGame.deployed().then(async function (instance) {
             newInstance = instance
             return newInstance.shootResult(gameId, cellRow, cellCol, hit);
           }).then(async function (logArray) {
+            isMyTurn = true;
           }).catch(function (err) {
-            console.error(err);
+            //alert("ERROR: " + err.message);
+            console.log(err.message);
           });
         }
-        else if (events.event == "ShootResult" && events.args._gameId.toNumber() == gameId  && events.args._address == web3.eth.defaultAccount) {
+        else if (events.event == "ShootResult" && events.args._gameId.toNumber() == gameId  && events.args._address == web3.eth.defaultAccount && events.blockNumber != lastBlock) {
+          lastBlock = events.blockNumber;
+          
           const cellRow = events.args._row.toNumber();
           const cellCol = events.args._col.toNumber();
           const cell = document.querySelector(
@@ -376,7 +389,8 @@ App = {
       $('#submitBtn').hide();
       App.startBattleFase();
     }).catch(function (err) {
-      console.error(err);
+      //alert("ERROR: " + err.message);
+      console.log(err.message);
     });
 
   },
@@ -429,7 +443,8 @@ App = {
     }).then(function (reciept) {
       App.handleEvents();
     }).catch(function (err) {
-      console.error(err);
+      //alert("ERROR: " + err.message);
+      console.log(err.message);
     });
   },
 
@@ -493,7 +508,8 @@ App = {
       return battleshipInstance.MerkleProofAttack(gameId, attackRes.toString(), hash, merkleProof);
     }).then(function (reciept) {
     }).catch(function (err) {
-      console.error(err);
+      //alert("ERROR: " + err.message);
+      console.log(err.message);
     });
   },
 

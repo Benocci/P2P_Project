@@ -62,7 +62,6 @@ input[type=number]::-webkit-outer-spin-button {
 
 .form-start {
   color: hsl(221, 100%, 50%);
-  text-transform: capitalize;
   text-align: center;
   font-size: 1.3em;
   font-weight: 600;
@@ -76,7 +75,6 @@ input[type=number]::-webkit-outer-spin-button {
 
 .form-board {
   color: hsl(221, 100%, 50%);
-  text-transform: capitalize;
   text-align: center;
   font-size: 1.3em;
   font-weight: 600;
@@ -88,7 +86,6 @@ input[type=number]::-webkit-outer-spin-button {
 
 .btn-start {
   color: rgb(255, 255, 255);
-  text-transform: capitalize;
   text-align: center;
   font-size: 1.3em;
   font-weight: 600;

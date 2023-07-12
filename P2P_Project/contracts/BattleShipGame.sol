@@ -69,7 +69,7 @@ contract BattleShipGame {
     }
 
     // function to remove an element of the array avaibleGame
-    function removeFromArray(uint256 _gameId) public {
+    function removeFromArray(uint256 _gameId) public returns (bool) {
         uint256 index;
         bool find = false;
 
@@ -83,13 +83,14 @@ contract BattleShipGame {
         }
 
         if (!find || index >= avaibleGame.length){
-            return;
+            return find;
         }
 
         for (uint i = index; i<avaibleGame.length-1; i++){ // move manually all the element
             avaibleGame[i] = avaibleGame[i+1];
         }
         delete avaibleGame[avaibleGame.length-1]; // remove the last element
+        return find;
     }
 
     function getRandomNumber(uint256 bound) private view returns (uint256) {
@@ -141,7 +142,11 @@ contract BattleShipGame {
         } else {
             //specific game
             chosenGameId = _gameId;
-            removeFromArray(chosenGameId);
+            bool find = removeFromArray(chosenGameId);
+
+            if(!find){
+                revert OutputError({myError: "This game does not exist!"});
+            }
         }
 
         if(chosenGameId <= 0){
@@ -239,4 +244,5 @@ contract BattleShipGame {
             _result
         );
     }
+    
 }
