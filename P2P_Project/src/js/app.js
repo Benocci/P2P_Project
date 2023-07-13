@@ -6,8 +6,10 @@ var board = null;
 var shipNumber = null;
 var shipPlaced = 0;
 // game data structures:
-var merkleProofMatrix = [];
+var merkleTree = null;
+var merkleRoot = null;
 var myBoardMatrix = null;
+var opponentBoardMatrix = null;
 // bool variable:
 var iHostTheGame = null;
 var isMyTurn = null;
@@ -126,11 +128,14 @@ App = {
 
           // board matrix initialization
           myBoardMatrix = [];
+          opponentBoardMatrix = [];
 
           for (var i = 0; i < boardSize; i++) {
             myBoardMatrix[i] = [];
+            opponentBoardMatrix[i] = [];
             for (var j = 0; j < boardSize; j++) {
               myBoardMatrix[i][j] = 0;
+              opponentBoardMatrix[i][j] = 0;
             }
           }
 
@@ -162,13 +167,16 @@ App = {
       boardSize = logArray.logs[0].args._boardSize.toNumber();
       shipNumber = logArray.logs[0].args._shipNum.toNumber();
 
-      // board inizialization:
+      // board matrix initialization
       myBoardMatrix = [];
+      opponentBoardMatrix = [];
 
       for (var i = 0; i < boardSize; i++) {
         myBoardMatrix[i] = [];
+        opponentBoardMatrix[i] = [];
         for (var j = 0; j < boardSize; j++) {
           myBoardMatrix[i][j] = 0;
+          opponentBoardMatrix[i][j] = 0;
         }
       }
 
@@ -184,9 +192,9 @@ App = {
   showAcceptEthAmount: function () { // function to show the information of the board to accept the game
     $('#joinSpecificGame').hide();
     $('#createOrJoin').hide();
-    document.getElementById('acceptAmountText').innerHTML = "<h2>Do you want to start the game with id " + gameId + "?</h2>" + 
-    "<h2>The board have a size equal to " + boardSize + " and " + shipNumber + " ships.</h2>" +
-    "<h2>The amount of ETH to bet is " + ethAmmount + " ETH.</h2>";
+    document.getElementById('acceptAmountText').innerHTML = "<h2>Do you want to start the game with id " + gameId + "?</h2>" +
+      "<h2>The board have a size equal to " + boardSize + " and " + shipNumber + " ships.</h2>" +
+      "<h2>The amount of ETH to bet is " + ethAmmount + " ETH.</h2>";
     $('#acceptAmount').show();
   },
 
@@ -218,7 +226,7 @@ App = {
 
   handleEvents: async function () { // function to handle the event received from an opponent
     let lastBlock = null;
-    
+
     await newInstance.allEvents(
       (err, events) => {
 
@@ -235,59 +243,51 @@ App = {
 
           App.createBoardTable();
         }
-        else if (events.event == "ShootShip" && events.args._gameId.toNumber() == gameId && events.args._address == web3.eth.defaultAccount  && events.blockNumber != lastBlock) {
+        else if (events.event == "ShootShip" && events.args._gameId.toNumber() == gameId && events.blockNumber != lastBlock) {
           lastBlock = events.blockNumber;
-          
+
           const cellRow = events.args._row.toNumber();
           const cellCol = events.args._col.toNumber();
-          const cell = document.querySelector(
-            `div.my-cell[data-row='${cellRow}'][data-col='${cellCol}']`
-          );
 
-          var hit;
-          if (myBoardMatrix[cellRow][cellCol] === 0) {
-            cell.innerHTML = "✖";
-            $('#messageInfo').text("Your opponent miss the shot, it is your turn!");
-            hit = 0;
-          }
-          else if (myBoardMatrix[cellRow][cellCol] !== 0) {
-            cell.innerHTML = '💥';
-            $('#messageInfo').text("Your opponent hit the shot, it is your turn!");
-            hit = 1;
-            myShipsHitted++;
-          }
-          
+          if (events.args._victimAddress == web3.eth.defaultAccount) {
+            const cell = document.querySelector(
+              `div.my-cell[data-row='${cellRow}'][data-col='${cellCol}']`
+            );
 
-          App.contracts.BattleShipGame.deployed().then(async function (instance) {
-            newInstance = instance
-            return newInstance.shootResult(gameId, cellRow, cellCol, hit);
-          }).then(async function (logArray) {
+            var hit;
+            if (myBoardMatrix[cellRow][cellCol] === 0) {
+              cell.innerHTML = "✖";
+              $('#messageInfo').text("Your opponent miss the shot, it is your turn!");
+              hit = 0;
+            }
+            else if (myBoardMatrix[cellRow][cellCol] !== 0) {
+              cell.innerHTML = '💥';
+              $('#messageInfo').text("Your opponent hit the shot, it is your turn!");
+              hit = 1;
+              myShipsHitted++;
+            }
+
             isMyTurn = true;
-          }).catch(function (err) {
-            //alert("ERROR: " + err.message);
-            console.log(err.message);
-          });
-        }
-        else if (events.event == "ShootResult" && events.args._gameId.toNumber() == gameId  && events.args._address == web3.eth.defaultAccount && events.blockNumber != lastBlock) {
-          lastBlock = events.blockNumber;
-          
-          const cellRow = events.args._row.toNumber();
-          const cellCol = events.args._col.toNumber();
-          const cell = document.querySelector(
-            `div.opponent-cell[data-row='${cellRow}'][data-col='${cellCol}']`
-          );
-
-          var result = events.args._result.toNumber();
-
-          if (result === 0) {
-            cell.innerHTML = "✖";
-            $('#messageInfo').text("You miss the shot, it is your opponent's turn!");
-          } else if (result !== 0) {
-            cell.innerHTML = '💥';
-            $('#messageInfo').text("You hit the shot, it is your opponent's turn!");
           }
-
-          isMyTurn = false;
+          else if(events.args._shooterAddress == web3.eth.defaultAccount) {
+            const cell = document.querySelector(
+              `div.opponent-cell[data-row='${cellRow}'][data-col='${cellCol}']`
+            );
+  
+            var result = events.args._result.toNumber();
+  
+  
+            if (result === 0) {
+              cell.innerHTML = "✖";
+              $('#messageInfo').text("You miss the shot, it is your opponent's turn!");
+            } else if (result !== 0) {
+              cell.innerHTML = '💥';
+              $('#messageInfo').text("You hit the shot, it is your opponent's turn!");
+            }
+            opponentBoardMatrix[cellRow][cellCol] = 1;
+  
+            isMyTurn = false;
+          }
         }
 
       });
@@ -373,11 +373,12 @@ App = {
       isMyTurn = false;
     }
 
-    //var merkleRoot = App.createMerkleTree()
+    merkleTree = App.createMerkleTree()
+    merkleRoot = merkleTree.hash;
 
     App.contracts.BattleShipGame.deployed().then(async function (instance) {
       newInstance = instance
-      return newInstance.submitBoard(gameId, 0);
+      return newInstance.submitBoard(gameId, merkleRoot);
     }).then(async function (logArray) {
       if (isMyTurn) {
         $('#messageInfo').text("Game started, it is your turn!");
@@ -420,7 +421,7 @@ App = {
         cell.classList.add("opponent-cell");
         cell.dataset.row = i;
         cell.dataset.col = j;
-        cell.addEventListener("click", (event) => App.handleCellClick(event));
+        cell.addEventListener("click", (event) => App.handleShoot(event));
         board.appendChild(cell);
       }
     }
@@ -428,7 +429,7 @@ App = {
     App.handleEvents();
   },
 
-  handleCellClick: function (event) { // function to handle the shot on a cell
+  handleShoot: function (event) { // function to handle the shot on a cell
     var cellRow = event.target.dataset.row;
     var cellCol = event.target.dataset.col;
 
@@ -437,9 +438,17 @@ App = {
       return;
     }
 
+    if (opponentBoardMatrix[cellRow][cellCol] == 1) {
+      alert("You have already attackd this cell, try again!");
+      return;
+    }
+
+    var merkleProof = createMerkleProof(cellRow, cellCol);
+    //var hash = window.web3Utils.keccak256(merkleTree[]);
+
     App.contracts.BattleShipGame.deployed().then(async function (instance) {
       newInstance = instance
-      return newInstance.shoot(gameId, cellRow, cellCol);
+      return newInstance.shoot(gameId, cellRow, cellCol, merkleProof, hash);
     }).then(function (reciept) {
       App.handleEvents();
     }).catch(function (err) {
@@ -449,75 +458,72 @@ App = {
   },
 
   createMerkleTree: async function () {
-    var boardArray = [];
-
-    for (let i = 0; i < boardSize; i++) {
-      for (let j = 0; j < boardSize; j++) {
-        boardArray.push(myBoardMatrix[i][j]);
-      }
+    if (myBoardMatrix == null) {
+      alert("Board is null!")
+      return;
     }
 
-    var hashedArray = [];
-    for (let i = 0; i < boardArray.length; i++) {
-      hashedArray.push(window.web3Utils.keccak256(boardArray[i] + Math.floor(Math.random() * 10)));
+    function buildTree(data) {
+      if (data.length === 1) {
+        const node = {
+          value: data[0],
+          hash: window.web3Utils.keccak256(data[0] + Math.floor(Math.random() * 10)),
+          left: null,
+          right: null
+        };
+        return [node];
+      }
+      const mid = Math.floor(data.length / 2);
+      const leftSubtree = buildTree(data.slice(0, mid));
+      const rightSubtree = buildTree(data.slice(mid));
+
+      const rootValue = leftSubtree.hash + rightSubtree.hash;
+      const rootHash = window.web3Utils.keccak256(rootValue);
+
+      return {
+        value: rootValue,
+        hash: rootHash,
+        left: leftSubtree,
+        right: rightSubtree
+      };
+
     }
 
-    merkleProofMatrix.push(hashedArray);
-
-    var tmpArray = [];
-
-    while (true) {
-      tmpArray = [];
-
-      for (let i = 0; i < hashedArray.length; i = i + 2) {
-        if (i + 1 < hashedArray.length) {
-          tmpArray.push(window.web3Utils.keccak256(App.xor(hashedArray[i], hashedArray[i + 1])));
-        }
-      }
-
-      hashedArray = tmpArray;
-      merkleProofMatrix.push(hashedArray);
-      if (tmpArray.length == 1 || tmpArray.length == 0) {
-        return tmpArray[0];
-      }
-    }
+    const merkleTree = buildTree(myBoardMatrix);
+    return merkleTree;
   },
 
-  merkleProof: function (row, col) {
-    var merkleProof = [];
-    let flatIndex = row * boardDim + col;
-    merkleProofMatrix.forEach(arr => {
-      if (arr.length > 1) {
-        if (flatIndex % 2 == 0) {
-          merkleProof.push((arr[flatIndex + 1]).toString());
-          flatIndex = flatIndex / 2;
-        } else {
-          merkleProof.push((arr[flatIndex - 1]).toString());
-          flatIndex = (flatIndex - 1) / 2;
+  createMerkleProof: function (row, col) {
+
+    function generateProof(node, targetIndex) {
+      if (!node) {
+        return null;
+      }
+
+      if (targetIndex === 0 && !node.left && !node.right) {
+        return [];
+      }
+
+      if (targetIndex % 2 === 0) {
+        const proof = generateProof(node.left, Math.floor(targetIndex / 2));
+        if (proof !== null) {
+          proof.push(node.right.hash);
+          return proof;
+        }
+      } else {
+        const proof = generateProof(node.right, Math.floor(targetIndex / 2));
+        if (proof !== null) {
+          proof.push(node.left.hash);
+          return proof;
         }
       }
 
-    });
+      return null;
+    }
+
+    var merkleProof = generateProof(merkleTree, row * boardDim + col);
 
     return merkleProof;
-  },
-
-  merkleProofAttack: function (attackRes, hash, merkleProof) {
-    App.contracts.Battleship.deployed().then(function (instance) {
-      battleshipInstance = instance;
-      return battleshipInstance.MerkleProofAttack(gameId, attackRes.toString(), hash, merkleProof);
-    }).then(function (reciept) {
-    }).catch(function (err) {
-      //alert("ERROR: " + err.message);
-      console.log(err.message);
-    });
-  },
-
-  xor: function (a, b) {
-    var BN = window.web3Utils.BN;
-    let c = new BN(a.slice(2), 16).xor(new BN(b.slice(2), 16)).toString(16);
-    result = "0x" + c.padStart(64, "0");
-    return result;
   }
 };
 

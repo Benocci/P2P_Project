@@ -9,7 +9,8 @@ contract BattleShipGame {
         uint256 boardSize;
         uint256 shipNum;
         uint256 ethAmount;
-        uint256 merkleRoot;
+        uint256 creatorMerkleRoot;
+        uint256 joinerMerkleRoot;
     }
 
     mapping(uint256 => gameInfo) public gameList; // map of game's ID (gameId => information of that game)
@@ -21,9 +22,7 @@ contract BattleShipGame {
     error OutputError(string myError);
 
     // event:
-    event GameCreated(
-        uint256 indexed _gameId
-    );
+    event GameCreated(uint256 indexed _gameId);
 
     event GameJoined(
         uint256 indexed _gameId,
@@ -41,20 +40,12 @@ contract BattleShipGame {
         bool response
     );
 
-    event StartGame(
-        uint256 indexed _gameId
-    );
+    event StartGame(uint256 indexed _gameId);
 
     event ShootShip(
         uint256 indexed _gameId,
-        address _address,
-        uint256 _row,
-        uint256 _col
-    );
-
-    event ShootResult(
-        uint256 indexed _gameId,
-        address _address,
+        address _shooterAddress,
+        address _victimAddress,
         uint256 _row,
         uint256 _col,
         uint256 _result
@@ -74,27 +65,30 @@ contract BattleShipGame {
         bool find = false;
 
         // loop the avaible game until find the index of the chosen one
-        for (uint i = 0; i < avaibleGame.length ; i++){
-            if(avaibleGame[i] == _gameId){
+        for (uint i = 0; i < avaibleGame.length; i++) {
+            if (avaibleGame[i] == _gameId) {
                 index = i;
                 find = true;
                 break;
             }
         }
 
-        if (!find || index >= avaibleGame.length){
+        if (!find || index >= avaibleGame.length) {
             return find;
         }
 
-        for (uint i = index; i<avaibleGame.length-1; i++){ // move manually all the element
-            avaibleGame[i] = avaibleGame[i+1];
+        for (uint i = index; i < avaibleGame.length - 1; i++) {
+            // move manually all the element
+            avaibleGame[i] = avaibleGame[i + 1];
         }
-        delete avaibleGame[avaibleGame.length-1]; // remove the last element
+        delete avaibleGame[avaibleGame.length - 1]; // remove the last element
         return find;
     }
 
     function getRandomNumber(uint256 bound) private view returns (uint256) {
-        return uint256(keccak256(abi.encodePacked(block.timestamp, msg.sender))) % bound;
+        return
+            uint256(keccak256(abi.encodePacked(block.timestamp, msg.sender))) %
+            bound;
     }
 
     // function to get the gameId of an avaible game
@@ -108,7 +102,8 @@ contract BattleShipGame {
         return randGameId;
     }
 
-    function createGame( // function to create a new game
+    function createGame(
+        // function to create a new game
         uint256 _boardSize,
         uint256 _shipNum,
         uint256 _ethAmount
@@ -122,13 +117,15 @@ contract BattleShipGame {
             _boardSize,
             _shipNum,
             _ethAmount,
+            0,
             0
         );
         avaibleGame.push(newGameId);
         emit GameCreated(newGameId);
     }
 
-    function joinGame(uint256 _gameId) public { // function to join a game
+    function joinGame(uint256 _gameId) public {
+        // function to join a game
         // check if there are avaible game
         if (avaibleGame.length < 1) {
             revert OutputError({myError: "No open games!"});
@@ -144,12 +141,12 @@ contract BattleShipGame {
             chosenGameId = _gameId;
             bool find = removeFromArray(chosenGameId);
 
-            if(!find){
+            if (!find) {
                 revert OutputError({myError: "This game does not exist!"});
             }
         }
 
-        if(chosenGameId <= 0){
+        if (chosenGameId <= 0) {
             revert OutputError({myError: "Chosen id negative!"});
         }
 
@@ -168,8 +165,10 @@ contract BattleShipGame {
         );
     }
 
-    function amountEthDecision(uint256 _gameId, bool _response) public { // function to accept or refuse the eth amount
-        if (!_response) { // refuse response
+    function amountEthDecision(uint256 _gameId, bool _response) public {
+        // function to accept or refuse the eth amount
+        if (!_response) {
+            // refuse response
             gameList[_gameId].joiner = address(0);
             avaibleGame.push(_gameId);
         }
@@ -182,67 +181,38 @@ contract BattleShipGame {
         );
     }
 
-    function submitBoard(uint256 _gameId, uint256 _merkleRoot) public { // function to submit the board
+    function submitBoard(uint256 _gameId, uint256 _merkleRoot) public {
+        // function to submit the board
         //TODO: check
-        if(_gameId <= 0){
+        if (_gameId <= 0) {
             revert OutputError({myError: "Game id is negative!"});
         }
 
-        if(gameList[_gameId].creator == msg.sender || gameList[_gameId].joiner == msg.sender){
-            gameList[_gameId].merkleRoot = _merkleRoot; 
-        }
-        else{
+        if (gameList[_gameId].creator == msg.sender) {
+            gameList[_gameId].creatorMerkleRoot = _merkleRoot;
+        } else if (gameList[_gameId].joiner == msg.sender) {
+            gameList[_gameId].joinerMerkleRoot = _merkleRoot;
+        } else {
             revert OutputError({myError: "Player not in that game!"});
         }
-        
-        emit StartGame(
-            _gameId
-        );
+
+        emit StartGame(_gameId);
     }
 
-    function shoot(uint256 _gameId, uint256 _row, uint256 _col) public { // function to communicate the coordinates of the fired cell
-        if(_gameId <= 0){
+    function shoot(uint256 _gameId, uint256 _row, uint256 _col) public {
+        // function to communicate the coordinates of the fired cell
+        if (_gameId <= 0) {
             revert OutputError({myError: "Game id is negative!"});
         }
 
         // take the opponent address for comunicate who was shot
         address opponentAddress;
-        if(msg.sender == gameList[_gameId].creator){
+        if (msg.sender == gameList[_gameId].creator) {
             opponentAddress = gameList[_gameId].joiner;
-        }
-        else{
+        } else {
             opponentAddress = gameList[_gameId].creator;
         }
 
-        emit ShootShip(
-            _gameId,
-            opponentAddress,
-            _row,
-            _col
-        );
+        emit ShootShip(_gameId, msg.sender ,opponentAddress, _row, _col, 0);
     }
-
-    function shootResult(uint256 _gameId, uint256 _row, uint256 _col, uint256 _result) public { // function to comunicate the result of the shot
-        if(_gameId <= 0){
-            revert OutputError({myError: "Game id is negative!"});
-        }
-        
-        // take the opponent address for comunicate who fired the shot
-        address opponentAddress;
-        if(msg.sender == gameList[_gameId].creator){
-            opponentAddress = gameList[_gameId].joiner;
-        }
-        else{
-            opponentAddress = gameList[_gameId].creator;
-        }
-
-        emit ShootResult(
-            _gameId,
-            opponentAddress,
-            _row,
-            _col,
-            _result
-        );
-    }
-    
 }
