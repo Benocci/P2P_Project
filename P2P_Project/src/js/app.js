@@ -269,14 +269,14 @@ App = {
 
             isMyTurn = true;
           }
-          else if(events.args._shooterAddress == web3.eth.defaultAccount) {
+          else if (events.args._shooterAddress == web3.eth.defaultAccount) {
             const cell = document.querySelector(
               `div.opponent-cell[data-row='${cellRow}'][data-col='${cellCol}']`
             );
-  
+
             var result = events.args._result.toNumber();
-  
-  
+
+
             if (result === 0) {
               cell.innerHTML = "✖";
               $('#messageInfo').text("You miss the shot, it is your opponent's turn!");
@@ -285,7 +285,7 @@ App = {
               $('#messageInfo').text("You hit the shot, it is your opponent's turn!");
             }
             opponentBoardMatrix[cellRow][cellCol] = 1;
-  
+
             isMyTurn = false;
           }
         }
@@ -373,8 +373,8 @@ App = {
       isMyTurn = false;
     }
 
-    merkleTree = App.createMerkleTree()
-    merkleRoot = merkleTree.hash;
+    merkleTree = App.createMerkleTree();
+    merkleRoot = merkleTree[merkleTree.length - 1]; 
 
     App.contracts.BattleShipGame.deployed().then(async function (instance) {
       newInstance = instance
@@ -444,7 +444,7 @@ App = {
     }
 
     var merkleProof = createMerkleProof(cellRow, cellCol);
-    //var hash = window.web3Utils.keccak256(merkleTree[]);
+    var hash = App.getHash(cellRow, cellCol);
 
     App.contracts.BattleShipGame.deployed().then(async function (instance) {
       newInstance = instance
@@ -457,71 +457,61 @@ App = {
     });
   },
 
-  createMerkleTree: async function () {
+  createMerkleTree: function () {
     if (myBoardMatrix == null) {
       alert("Board is null!")
       return;
     }
 
-    function buildTree(data) {
-      if (data.length === 1) {
-        const node = {
-          value: data[0],
-          hash: window.web3Utils.keccak256(data[0] + Math.floor(Math.random() * 10)),
-          left: null,
-          right: null
-        };
-        return [node];
+    var merkleTreeMatrix = [];
+
+    for(let i=0; i<boardSize; i++){
+      for(let j=0; j<boardSize; j++){
+        merkleTreeMatrix.push(window.web3Utils.keccak256(data[0] + Math.floor(Math.random() * 10)));
       }
-      const mid = Math.floor(data.length / 2);
-      const leftSubtree = buildTree(data.slice(0, mid));
-      const rightSubtree = buildTree(data.slice(mid));
-
-      const rootValue = leftSubtree.hash + rightSubtree.hash;
-      const rootHash = window.web3Utils.keccak256(rootValue);
-
-      return {
-        value: rootValue,
-        hash: rootHash,
-        left: leftSubtree,
-        right: rightSubtree
-      };
-
     }
 
-    const merkleTree = buildTree(myBoardMatrix);
-    return merkleTree;
+    let offset = 0;
+
+    for(let levelSize = boardSize*boardSize; levelSize > 1; levelSize = Math.floor(levelSize / 2)){
+      for(let i=0; i<levelSize; i+=2){
+        const leftChild = merkleTreeMatrix[offset + i];
+        const rightChild = merkleTreeMatrix[offset + i + 1];
+        const parentNodeHash = window.web3Utils.keccak256(App.xor(leftChild, rightChild));
+        merkleTreeMatrix.push(parentNodeHash);
+      }
+      offset += levelSize;
+    }
+
+    return merkleTreeMatrix;
+  },
+
+  xor: function (a, b) {
+    var BN = window.web3Utils.BN;
+    let c = new BN(a.slice(2), 16).xor(new BN(b.slice(2), 16)).toString(16);
+    result = "0x" + c.padStart(64, "0");
+    return result;
+  },
+
+  getHash: function (row, col) {
+    var targetIndex = row * boardSize + col;
+
+    return merkleTree[targetIndex];
   },
 
   createMerkleProof: function (row, col) {
+    const merkleProof = [];
+    let index = row * boardSize + col;
 
-    function generateProof(node, targetIndex) {
-      if (!node) {
-        return null;
+    for(let i = tree.length - 1; i > 0; i -= 2){
+      const siblingIndex = (index % 2 === 0) ? index + 1 : index - 1;
+      
+      if(siblingIndex < tree.length){
+        merkleProof.push(tree[siblingIndex]);
       }
 
-      if (targetIndex === 0 && !node.left && !node.right) {
-        return [];
-      }
-
-      if (targetIndex % 2 === 0) {
-        const proof = generateProof(node.left, Math.floor(targetIndex / 2));
-        if (proof !== null) {
-          proof.push(node.right.hash);
-          return proof;
-        }
-      } else {
-        const proof = generateProof(node.right, Math.floor(targetIndex / 2));
-        if (proof !== null) {
-          proof.push(node.left.hash);
-          return proof;
-        }
-      }
-
-      return null;
+      index = Math.floor(index/2);
     }
-
-    var merkleProof = generateProof(merkleTree, row * boardDim + col);
 
     return merkleProof;
   }
