@@ -44,8 +44,14 @@ contract BattleShipGame {
 
     event ShootShip(
         uint256 indexed _gameId,
-        address _shooterAddress,
-        address _victimAddress,
+        address _address,
+        uint256 _row,
+        uint256 _col
+    );
+
+    event ShootResult(
+        uint256 indexed _gameId,
+        address _address,
         uint256 _row,
         uint256 _col,
         uint256 _result
@@ -213,6 +219,41 @@ contract BattleShipGame {
             opponentAddress = gameList[_gameId].creator;
         }
 
-        emit ShootShip(_gameId, msg.sender ,opponentAddress, _row, _col, 0);
+        emit ShootShip(
+            _gameId,
+            opponentAddress,
+            _row,
+            _col
+        );
+    }
+
+    function shootResult(
+        uint256 _gameId,
+        uint256 _row,
+        uint256 _col,
+        uint256 _result,
+        bytes32 _hash,
+        bytes32[] memory _merkleProof
+    ) public {
+        // function to comunicate the result of the shot
+        if (_gameId <= 0) {
+            revert OutputError({myError: "Game id is negative!"});
+        }
+
+        // take the opponent address for comunicate who fired the shot
+        address opponentAddress;
+        if (msg.sender == gameList[_gameId].creator) {
+            opponentAddress = gameList[_gameId].joiner;
+        } else {
+            opponentAddress = gameList[_gameId].creator;
+        }
+
+        emit ShootResult(
+            _gameId,
+            opponentAddress, 
+            _row,
+            _col,
+            _result
+        );
     }
 }

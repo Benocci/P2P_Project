@@ -11,6 +11,7 @@ var merkleRoot = null;
 var myBoardMatrix = null;
 var opponentBoardMatrix = null;
 // bool variable:
+var gameStarted = false;
 var iHostTheGame = null;
 var isMyTurn = null;
 
@@ -243,51 +244,61 @@ App = {
 
           App.createBoardTable();
         }
-        else if (events.event == "ShootShip" && events.args._gameId.toNumber() == gameId && events.blockNumber != lastBlock) {
+        else if (events.event == "ShootShip" && events.args._gameId.toNumber() == gameId && events.args._address == web3.eth.defaultAccount && events.blockNumber != lastBlock) {
           lastBlock = events.blockNumber;
 
           const cellRow = events.args._row.toNumber();
           const cellCol = events.args._col.toNumber();
+          const cell = document.querySelector(
+            `div.my-cell[data-row='${cellRow}'][data-col='${cellCol}']`
+          );
 
-          if (events.args._victimAddress == web3.eth.defaultAccount) {
-            const cell = document.querySelector(
-              `div.my-cell[data-row='${cellRow}'][data-col='${cellCol}']`
-            );
+          var hit;
+          if (myBoardMatrix[cellRow][cellCol] === 0) {
+            cell.innerHTML = "✖";
+            $('#messageInfo').text("Your opponent miss the shot, it is your turn!");
+            hit = 0;
+          }
+          else if (myBoardMatrix[cellRow][cellCol] !== 0) {
+            cell.innerHTML = '💥';
+            $('#messageInfo').text("Your opponent hit the shot, it is your turn!");
+            hit = 1;
+            myShipsHitted++;
+          }
 
-            var hit;
-            if (myBoardMatrix[cellRow][cellCol] === 0) {
-              cell.innerHTML = "✖";
-              $('#messageInfo').text("Your opponent miss the shot, it is your turn!");
-              hit = 0;
-            }
-            else if (myBoardMatrix[cellRow][cellCol] !== 0) {
-              cell.innerHTML = '💥';
-              $('#messageInfo').text("Your opponent hit the shot, it is your turn!");
-              hit = 1;
-              myShipsHitted++;
-            }
+          var merkleProof = createMerkleProof(cellRow, cellCol);
+          var hash = App.getHash(cellRow, cellCol);
 
+          App.contracts.BattleShipGame.deployed().then(async function (instance) {
+            newInstance = instance
+            return newInstance.shootResult(gameId, cellRow, cellCol, hit, hash, merkleProof);
+          }).then(async function (logArray) {
             isMyTurn = true;
+          }).catch(function (err) {
+            //alert("ERROR: " + err.message);
+            console.log(err.message);
+          });
+        }
+        else if (events.event == "ShootResult" && events.args._gameId.toNumber() == gameId && events.args._address == web3.eth.defaultAccount && events.blockNumber != lastBlock) {
+          lastBlock = events.blockNumber;
+
+          const cellRow = events.args._row.toNumber();
+          const cellCol = events.args._col.toNumber();
+          const cell = document.querySelector(
+            `div.opponent-cell[data-row='${cellRow}'][data-col='${cellCol}']`
+          );
+
+          var result = events.args._result.toNumber();
+
+          if (result === 0) {
+            cell.innerHTML = "✖";
+            $('#messageInfo').text("You miss the shot, it is your opponent's turn!");
+          } else if (result !== 0) {
+            cell.innerHTML = '💥';
+            $('#messageInfo').text("You hit the shot, it is your opponent's turn!");
           }
-          else if (events.args._shooterAddress == web3.eth.defaultAccount) {
-            const cell = document.querySelector(
-              `div.opponent-cell[data-row='${cellRow}'][data-col='${cellCol}']`
-            );
 
-            var result = events.args._result.toNumber();
-
-
-            if (result === 0) {
-              cell.innerHTML = "✖";
-              $('#messageInfo').text("You miss the shot, it is your opponent's turn!");
-            } else if (result !== 0) {
-              cell.innerHTML = '💥';
-              $('#messageInfo').text("You hit the shot, it is your opponent's turn!");
-            }
-            opponentBoardMatrix[cellRow][cellCol] = 1;
-
-            isMyTurn = false;
-          }
+          isMyTurn = false;
         }
 
       });
@@ -329,6 +340,11 @@ App = {
   },
 
   placeShip: function (event) { // function to add a ship in a specific position of the board
+    if(gameStarted){
+      alert("The game has started, you can't change the position of the ships!")
+      return;
+    }
+
     const cellRow = event.target.dataset.row;
     const cellCol = event.target.dataset.col;
     const cell = document.querySelector(
@@ -374,7 +390,7 @@ App = {
     }
 
     merkleTree = App.createMerkleTree();
-    merkleRoot = merkleTree[merkleTree.length - 1]; 
+    merkleRoot = merkleTree[merkleTree.length - 1];
 
     App.contracts.BattleShipGame.deployed().then(async function (instance) {
       newInstance = instance
@@ -388,6 +404,7 @@ App = {
       }
       $('#opponentBoard').show();
       $('#submitBtn').hide();
+      gameStarted = true;
       App.startBattleFase();
     }).catch(function (err) {
       //alert("ERROR: " + err.message);
@@ -443,12 +460,9 @@ App = {
       return;
     }
 
-    var merkleProof = createMerkleProof(cellRow, cellCol);
-    var hash = App.getHash(cellRow, cellCol);
-
     App.contracts.BattleShipGame.deployed().then(async function (instance) {
       newInstance = instance
-      return newInstance.shoot(gameId, cellRow, cellCol, merkleProof, hash);
+      return newInstance.shoot(gameId, cellRow, cellCol);
     }).then(function (reciept) {
       App.handleEvents();
     }).catch(function (err) {
@@ -465,16 +479,16 @@ App = {
 
     var merkleTreeMatrix = [];
 
-    for(let i=0; i<boardSize; i++){
-      for(let j=0; j<boardSize; j++){
-        merkleTreeMatrix.push(window.web3Utils.keccak256(data[0] + Math.floor(Math.random() * 10)));
+    for (let i = 0; i < boardSize; i++) {
+      for (let j = 0; j < boardSize; j++) {
+        merkleTreeMatrix.push(window.web3Utils.keccak256(myBoardMatrix[i][j].toString() + Math.floor(Math.random() * 10)));
       }
     }
 
     let offset = 0;
 
-    for(let levelSize = boardSize*boardSize; levelSize > 1; levelSize = Math.floor(levelSize / 2)){
-      for(let i=0; i<levelSize; i+=2){
+    for (let levelSize = boardSize * boardSize; levelSize > 1; levelSize = Math.floor(levelSize / 2)) {
+      for (let i = 0; i < levelSize; i += 2) {
         const leftChild = merkleTreeMatrix[offset + i];
         const rightChild = merkleTreeMatrix[offset + i + 1];
         const parentNodeHash = window.web3Utils.keccak256(App.xor(leftChild, rightChild));
@@ -503,14 +517,14 @@ App = {
     const merkleProof = [];
     let index = row * boardSize + col;
 
-    for(let i = tree.length - 1; i > 0; i -= 2){
+    for (let i = tree.length - 1; i > 0; i -= 2) {
       const siblingIndex = (index % 2 === 0) ? index + 1 : index - 1;
-      
-      if(siblingIndex < tree.length){
+
+      if (siblingIndex < tree.length) {
         merkleProof.push(tree[siblingIndex]);
       }
 
-      index = Math.floor(index/2);
+      index = Math.floor(index / 2);
     }
 
     return merkleProof;
