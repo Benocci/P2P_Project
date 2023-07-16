@@ -40,7 +40,11 @@ contract BattleShipGame {
         bool response
     );
 
-    event StartGame(uint256 indexed _gameId);
+    event StartGame(
+        uint256 indexed _gameId,
+        bytes32 _merkleRootCreator, 
+        bytes32 _merkleRootJoiner
+    );
 
     event ShootShip(
         uint256 indexed _gameId,
@@ -56,6 +60,14 @@ contract BattleShipGame {
         uint256 _col,
         uint256 _merkleCheck,
         uint256 _result
+    );
+
+    event SendInfo(
+        uint256 indexed _gameId,
+        address _address,
+        bytes32 _merkleRootVictim,
+        bytes32 _merkleRootShooter,
+        bytes32 _merkleRootProof
     );
 
     constructor() {}
@@ -203,7 +215,7 @@ contract BattleShipGame {
             revert OutputError({myError: "Player not in that game!"});
         }
 
-        emit StartGame(_gameId);
+        emit StartGame(_gameId, gameList[_gameId].creatorMerkleRoot, gameList[_gameId].joinerMerkleRoot);
     }
 
     function shoot(uint256 _gameId, uint256 _row, uint256 _col) public {
@@ -239,12 +251,15 @@ contract BattleShipGame {
         // take the opponent address for comunicate who fired the shot
         address opponentAddress;
         bytes32 merkleRoot;
+        bytes32 merkleRoot2;
         if (msg.sender == gameList[_gameId].creator) {
             opponentAddress = gameList[_gameId].joiner;
             merkleRoot = gameList[_gameId].creatorMerkleRoot;
+            merkleRoot2 = gameList[_gameId].joinerMerkleRoot;
         } else {
             opponentAddress = gameList[_gameId].creator;
             merkleRoot = gameList[_gameId].joinerMerkleRoot;
+            merkleRoot2 = gameList[_gameId].creatorMerkleRoot;
         }
 
         uint256 check;
@@ -269,5 +284,7 @@ contract BattleShipGame {
         }
 
         emit ShootResult(_gameId, opponentAddress, _row, _col, check, _result);
+
+        emit SendInfo(_gameId, opponentAddress, merkleRoot, merkleRoot2, hashValue);
     }
 }

@@ -337,6 +337,13 @@ App = {
 
           isMyTurn = false;
         }
+        else if(events.event == "SendInfo" && events.args._gameId.toNumber() == gameId && events.args._address == web3.eth.defaultAccount){
+          console.log("RISULTATO MERKLE PROOF:\n" +
+            "MerkleRoot hashato in js:\n" + merkleRoot + "\n" +
+            "MerkleRoot vittima hashato in solidity:\n" + events.args._merkleRootVictim + "\n" +
+            "MerkleRoot sparatore hashato in solidity:\n" + events.args._merkleRootShooter + "\n" +
+            "Valore ricostruito hashato in solidity:\n" + events.args._merkleRootProof + "\n");
+        }
 
       });
   },
@@ -427,7 +434,7 @@ App = {
     }
 
     merkleTree = App.createMerkleTree();
-    merkleRoot = merkleTree[merkleTree.length - 1];
+    merkleRoot = merkleTree[merkleTree.length - 1][0];
 
     App.contracts.BattleShipGame.deployed().then(async function (instance) {
       newInstance = instance
@@ -441,6 +448,12 @@ App = {
       }
       $('#opponentBoard').show();
       $('#submitBtn').hide();
+
+      //console.log("MerklRootCreatore: " + logArray.logs[0].args._merkleRootCreator + "\n" +
+      //"MerkleRootJoiner: " + logArray.logs[0].args._merkleRootJoiner + "\n" +
+      //"MerkleRoot: " +  merkleRoot
+      //);
+
       gameStarted = true;
       App.startBattleFase();
     }).catch(function (err) {
