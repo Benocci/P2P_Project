@@ -54,6 +54,7 @@ contract BattleShipGame {
         address _address,
         uint256 _row,
         uint256 _col,
+        uint256 _merkleCheck,
         uint256 _result
     );
 
@@ -219,12 +220,7 @@ contract BattleShipGame {
             opponentAddress = gameList[_gameId].creator;
         }
 
-        emit ShootShip(
-            _gameId,
-            opponentAddress,
-            _row,
-            _col
-        );
+        emit ShootShip(_gameId, opponentAddress, _row, _col);
     }
 
     function shootResult(
@@ -242,18 +238,36 @@ contract BattleShipGame {
 
         // take the opponent address for comunicate who fired the shot
         address opponentAddress;
+        uint256 merkleRoot;
         if (msg.sender == gameList[_gameId].creator) {
             opponentAddress = gameList[_gameId].joiner;
+            merkleRoot = gameList[_gameId].creatorMerkleRoot;
         } else {
             opponentAddress = gameList[_gameId].creator;
+            merkleRoot = gameList[_gameId].joinerMerkleRoot;
         }
 
-        emit ShootResult(
-            _gameId,
-            opponentAddress, 
-            _row,
-            _col,
-            _result
-        );
+        uint256 check;
+        bytes32 hashValue = _hash;
+
+        uint256 index = _row * gameList[_gameId].boardSize + _col;
+        for (uint i = 0; i < _merkleProof.length; i++) {
+            if (index % 2 == 0) {
+                hashValue = keccak256(abi.encodePacked(hashValue, _merkleProof[i]));
+            } else {
+                hashValue = keccak256(abi.encodePacked(_merkleProof[i], hashValue));
+            }
+
+            index = index/2;
+        }
+
+        if(merkleRoot == uint256(hashValue)){
+            check = 1;
+        }
+        else{
+            check = 0;
+        }
+
+        emit ShootResult(_gameId, opponentAddress, _row, _col, check, _result);
     }
 }
