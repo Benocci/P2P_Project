@@ -5,6 +5,7 @@ var boardSize = null;
 var board = null;
 var shipNumber = null;
 var shipPlaced = 0;
+var myShipsHitted = 0;
 // game data structures:
 var merkleTree = null;
 var merkleRoot = null;
@@ -110,7 +111,7 @@ App = {
         alert("The number of ships have to be a positive number!");
         return;
       }
-      if (shipNumber > (boardSize*boardSize)/2){
+      if (shipNumber > (boardSize * boardSize) / 2) {
         alert("The number of ships have to be less than half of the total number of cells!");
         return;
       }
@@ -238,7 +239,7 @@ App = {
         if (events.event == "AmountEthResponse" && events.args._gameId.toNumber() == gameId && events.blockNumber != lastBlock) {
           lastBlock = events.blockNumber;
           if (events.args._response) { // the opponent have refuse the ethereum amount
-            return App.handleEvents();
+            return;
           }
 
           // start placement fase:
@@ -263,7 +264,7 @@ App = {
             $('#messageInfo').text("Your opponent miss the shot, it is your turn!");
             hit = 0;
           }
-          else if (myBoardMatrix[cellRow][cellCol] !== 0) {
+          else {
             cell.innerHTML = '💥';
             $('#messageInfo').text("Your opponent hit the shot, it is your turn!");
             hit = 1;
@@ -273,14 +274,31 @@ App = {
           //alert("DEBUG: Sparo ricevuto sulla cella [" + cellRow + "][" + cellCol + "], genero hash e merkleProof");
 
           var merkleProof = App.createMerkleProof(cellRow, cellCol);
-
-          console.log("DEBUG: Sparo ricevuto sulla cella [" + cellRow + "][" + cellCol + "], merkleProof= " +  merkleProof + ", ora genero hash");
-
-          //alert("DEBUG: Sparo ricevuto sulla cella [" + cellRow + "][" + cellCol + "], merkleProof= " +  merkleProof + ", ora genero hash");
-
           var hash = App.getHash(cellRow, cellCol);
 
-          console.log("DEBUG: Sparo ricevuto sulla cella [" + cellRow + "][" + cellCol + "], invio hit=" + hit + ", hash= " + hash + " e merkleProof= " + merkleProof);
+          //console.log("DEBUG: Sparo ricevuto sulla cella [" + cellRow + "][" + cellCol + "], invio hit=" + hit + ", hash= " + hash + " e merkleProof= " + merkleProof);
+
+          var temp = hash;
+          var index = cellRow * boardSize + cellCol;
+          for (let i = 0; i < merkleProof.length; i++) {
+            if (index % 2 == 0) {
+              temp = window.web3Utils.soliditySha3(temp + merkleProof[i]);
+            }
+            else {
+              temp = window.web3Utils.soliditySha3(merkleProof[i] + temp);
+            }
+
+            index = Math.floor(index / 2);
+          }
+          var confronto1 = (merkleRoot == temp);
+
+          console.log("VARIE PROVE DI MERKLE PROOF HASHATO:\n" +
+            "Merkletree hashato:\n" + merkleTree + "\n" +
+            "MerkleProof hashato:\n" + merkleProof + "\n" +
+            "MerkleRoot hashato:\n" + merkleRoot + "\n" +
+            "Valore da verificare hashato:\n" + hash + "\n" +
+            "Valore ricostruito hashato:\n" + temp + "\n" +
+            "Confronto hashato: " + confronto1 + "\n");
 
           //alert("DEBUG: Sparo ricevuto sulla cella [" + cellRow + "][" + cellCol + "], invio hit=" + hit + ", hash= " + hash + " e merkleProof= " + merkleProof);
 
@@ -307,12 +325,12 @@ App = {
 
           var checkResult = events.args._merkleCheck.toNumber();
 
-          console.log("DEBUG: Sparo avvenuto sulla cella [" + cellRow + "][" + cellCol + "], risultato=" + result + ", controllo= " + checkResult);
+          console.log("DEBUG: Sparo avvenuto sulla cella [" + cellRow + "][" + cellCol + "], risultato: " + result + ", controllo: " + checkResult);
 
           if (result === 0) {
             cell.innerHTML = "✖";
             $('#messageInfo').text("You miss the shot, it is your opponent's turn!");
-          } else if (result !== 0) {
+          } else {
             cell.innerHTML = '💥';
             $('#messageInfo').text("You hit the shot, it is your opponent's turn!");
           }
@@ -359,7 +377,7 @@ App = {
   },
 
   placeShip: function (event) { // function to add a ship in a specific position of the board
-    if(gameStarted){
+    if (gameStarted) {
       alert("The game has started, you can't change the position of the ships!")
       return;
     }
@@ -461,8 +479,6 @@ App = {
         board.appendChild(cell);
       }
     }
-
-    App.handleEvents();
   },
 
   handleShoot: function (event) { // function to handle the shot on a cell
@@ -484,7 +500,6 @@ App = {
       newInstance = instance
       return newInstance.shoot(gameId, cellRow, cellCol);
     }).then(function (reciept) {
-      App.handleEvents();
     }).catch(function (err) {
       //alert("ERROR: " + err.message);
       console.log(err.message);
@@ -502,7 +517,7 @@ App = {
     var temp = [];
     for (let i = 0; i < boardSize; i++) {
       for (let j = 0; j < boardSize; j++) {
-        temp.push(window.web3Utils.keccak256(myBoardMatrix[i][j].toString() + Math.floor(Math.random() * 10)));
+        temp.push(window.web3Utils.soliditySha3(myBoardMatrix[i][j].toString() + Math.floor(Math.random() * 10)));
       }
     }
 
@@ -513,7 +528,7 @@ App = {
       for (let j = 0; j < temp.length; j += 2) {
         const leftChild = temp[j];
         const rightChild = temp[j + 1];
-        nextLevel.push(window.web3Utils.keccak256(leftChild + rightChild));
+        nextLevel.push(window.web3Utils.soliditySha3(leftChild + rightChild));
       }
       temp = nextLevel;
       merkleTreeMatrix.push(nextLevel);
@@ -530,18 +545,18 @@ App = {
 
   createMerkleProof: function (row, col) {
     const merkleProof = [];
-  let index = (row * boardSize) + col;
+    let index = (row * boardSize) + col;
 
-  for (let i = 0; i < (merkleTree.length - 1); i++) {
-    if(index % 2 == 0) {
-      merkleProof.push(merkleTree[i][index + 1]);
-      index = index / 2;
+    for (let i = 0; i < (merkleTree.length - 1); i++) {
+      if (index % 2 == 0) {
+        merkleProof.push(merkleTree[i][index + 1]);
+        index = index / 2;
+      }
+      else {
+        merkleProof.push(merkleTree[i][index - 1]);
+        index = (index - 1) / 2;
+      }
     }
-    else{
-      merkleProof.push(merkleTree[i][index - 1]);
-      index = (index-1) / 2;
-    }
-  }
 
     return merkleProof;
   }
