@@ -302,11 +302,10 @@ App = {
           const cell = document.querySelector(
             `div.opponent-cell[data-row='${cellRow}'][data-col='${cellCol}']`
           );
-          
-          console.log("PROVA")
 
           var result = events.args._result.toNumber();
-          var checkResult = events.args._check.toNumber();
+
+          var checkResult = events.args._merkleCheck.toNumber();
 
           console.log("DEBUG: Sparo avvenuto sulla cella [" + cellRow + "][" + cellCol + "], risultato=" + result + ", controllo= " + checkResult);
 
@@ -479,6 +478,7 @@ App = {
       alert("You have already attackd this cell, try again!");
       return;
     }
+    opponentBoardMatrix[cellRow][cellCol] = 1;
 
     App.contracts.BattleShipGame.deployed().then(async function (instance) {
       newInstance = instance

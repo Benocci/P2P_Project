@@ -9,8 +9,8 @@ contract BattleShipGame {
         uint256 boardSize;
         uint256 shipNum;
         uint256 ethAmount;
-        uint256 creatorMerkleRoot;
-        uint256 joinerMerkleRoot;
+        bytes32 creatorMerkleRoot;
+        bytes32 joinerMerkleRoot;
     }
 
     mapping(uint256 => gameInfo) public gameList; // map of game's ID (gameId => information of that game)
@@ -188,7 +188,7 @@ contract BattleShipGame {
         );
     }
 
-    function submitBoard(uint256 _gameId, uint256 _merkleRoot) public {
+    function submitBoard(uint256 _gameId, bytes32 _merkleRoot) public {
         // function to submit the board
         //TODO: check
         if (_gameId <= 0) {
@@ -238,7 +238,7 @@ contract BattleShipGame {
 
         // take the opponent address for comunicate who fired the shot
         address opponentAddress;
-        uint256 merkleRoot;
+        bytes32 merkleRoot;
         if (msg.sender == gameList[_gameId].creator) {
             opponentAddress = gameList[_gameId].joiner;
             merkleRoot = gameList[_gameId].creatorMerkleRoot;
@@ -261,7 +261,7 @@ contract BattleShipGame {
             index = index/2;
         }
 
-        if(merkleRoot == uint256(hashValue)){
+        if(merkleRoot == hashValue){
             check = 1;
         }
         else{
