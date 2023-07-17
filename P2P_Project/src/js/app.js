@@ -16,6 +16,8 @@ var gameStarted = false;
 var iHostTheGame = null;
 var isMyTurn = null;
 
+const sumbitBoardFunction = () => {App.submitBoard()};
+
 App = {
   web3Provider: null,
   contracts: {},
@@ -367,21 +369,28 @@ App = {
     if (myBoardMatrix[cell.dataset.row][cell.dataset.col] == 0) {
       // insert the ship in the position
       cell.classList.add('ship');
-      $('#messageInfo').text("Ship placed!");
       myBoardMatrix[cell.dataset.row][cell.dataset.col] = 1;
       shipPlaced++;
+      let remainingShips = shipNumber - shipPlaced;
+      $('#submitInfo').text("Ship placed, " + remainingShips + " remaining!");
     } else {
       // remove the ship if already present
       cell.classList.remove('ship');
-      $('#messageInfo').text("Ship removed!");
       myBoardMatrix[cell.dataset.row][cell.dataset.col] = 0;
       shipPlaced--;
+      let remainingShips = shipNumber - shipPlaced;
+      $('#submitInfo').text("Ship removed, " + remainingShips + " remaining!");
+      const submit = document.getElementById('submitBtn');
+      submit.style.color = "hsl(221, 100%, 50%)";
+      submit.removeEventListener("click", sumbitBoardFunction);
     }
 
     // when all the ship are placed, submit button enable
     if (shipPlaced == shipNumber) {
+      $('#submitInfo').text("All ships placed, click here to submit your board!");
       const submit = document.getElementById('submitBtn');
-      submit.addEventListener("click", () => App.submitBoard());
+      submit.style.color = "red";
+      submit.addEventListener("click", sumbitBoardFunction);
     }
   },
 
