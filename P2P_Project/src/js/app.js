@@ -149,7 +149,7 @@ App = {
           App.handleEvents();
         }
       }).catch(function (err) {
-        alert("ERROR: " + err.message);
+        //alert("ERROR: " + err.message);
         console.log(err.message);
       });
     }
@@ -271,36 +271,8 @@ App = {
             myShipsHitted++;
           }
 
-          //alert("DEBUG: Sparo ricevuto sulla cella [" + cellRow + "][" + cellCol + "], genero hash e merkleProof");
-
           var merkleProof = App.createMerkleProof(cellRow, cellCol);
           var hash = App.getHash(cellRow, cellCol);
-
-          //console.log("DEBUG: Sparo ricevuto sulla cella [" + cellRow + "][" + cellCol + "], invio hit=" + hit + ", hash= " + hash + " e merkleProof= " + merkleProof);
-
-          var temp = hash;
-          var index = cellRow * boardSize + cellCol;
-          for (let i = 0; i < merkleProof.length; i++) {
-            if (index % 2 == 0) {
-              temp = window.web3Utils.soliditySha3(temp + merkleProof[i]);
-            }
-            else {
-              temp = window.web3Utils.soliditySha3(merkleProof[i] + temp);
-            }
-
-            index = Math.floor(index / 2);
-          }
-          var confronto1 = (merkleRoot == temp);
-
-          console.log("VARIE PROVE DI MERKLE PROOF HASHATO:\n" +
-            "Merkletree hashato:\n" + merkleTree + "\n" +
-            "MerkleProof hashato:\n" + merkleProof + "\n" +
-            "MerkleRoot hashato:\n" + merkleRoot + "\n" +
-            "Valore da verificare hashato:\n" + hash + "\n" +
-            "Valore ricostruito hashato:\n" + temp + "\n" +
-            "Confronto hashato: " + confronto1 + "\n");
-
-          //alert("DEBUG: Sparo ricevuto sulla cella [" + cellRow + "][" + cellCol + "], invio hit=" + hit + ", hash= " + hash + " e merkleProof= " + merkleProof);
 
           App.contracts.BattleShipGame.deployed().then(async function (instance) {
             newInstance = instance
@@ -336,13 +308,6 @@ App = {
           }
 
           isMyTurn = false;
-        }
-        else if(events.event == "SendInfo" && events.args._gameId.toNumber() == gameId && events.args._address == web3.eth.defaultAccount){
-          console.log("RISULTATO MERKLE PROOF:\n" +
-            "MerkleRoot hashato in js:\n" + merkleRoot + "\n" +
-            "MerkleRoot vittima hashato in solidity:\n" + events.args._merkleRootVictim + "\n" +
-            "MerkleRoot sparatore hashato in solidity:\n" + events.args._merkleRootShooter + "\n" +
-            "Valore ricostruito hashato in solidity:\n" + events.args._merkleRootProof + "\n");
         }
 
       });
@@ -449,11 +414,6 @@ App = {
       $('#opponentBoard').show();
       $('#submitBtn').hide();
 
-      //console.log("MerklRootCreatore: " + logArray.logs[0].args._merkleRootCreator + "\n" +
-      //"MerkleRootJoiner: " + logArray.logs[0].args._merkleRootJoiner + "\n" +
-      //"MerkleRoot: " +  merkleRoot
-      //);
-
       gameStarted = true;
       App.startBattleFase();
     }).catch(function (err) {
@@ -541,7 +501,7 @@ App = {
       for (let j = 0; j < temp.length; j += 2) {
         const leftChild = temp[j];
         const rightChild = temp[j + 1];
-        nextLevel.push(window.web3Utils.soliditySha3(leftChild + rightChild));
+        nextLevel.push(window.web3Utils.soliditySha3(leftChild + rightChild.slice(2)));
       }
       temp = nextLevel;
       merkleTreeMatrix.push(nextLevel);
