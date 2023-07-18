@@ -9,6 +9,8 @@ contract BattleShipGame {
         uint256 boardSize;
         uint256 shipNum;
         uint256 ethAmount;
+        uint256 creatorEth;
+        uint256 joinerEth;
         bytes32 creatorMerkleRoot;
         bytes32 joinerMerkleRoot;
         uint256 creatorNumShips;
@@ -145,6 +147,8 @@ contract BattleShipGame {
             _ethAmount,
             0,
             0,
+            0,
+            0,
             _shipNum,
             _shipNum
         );
@@ -218,6 +222,33 @@ contract BattleShipGame {
             _gameId,
             _response
         );
+    }
+
+    function sendEth(uint256 _gameId) public payable {
+        // function to send the ETH to the contract
+
+        // Check if the game ID is valid
+        if (_gameId <= 0) {
+            revert OutputError("Game id is negative!");
+        }
+
+        // Check if the sender is either the creator or the joiner of the game
+        if (
+            gameList[_gameId].creator != msg.sender &&
+            gameList[_gameId].joiner != msg.sender
+        ) {
+            revert OutputError("Player not in that game!");
+        }
+
+        require(msg.value > 0, "ETH are 0!");
+
+        if (gameList[_gameId].creator == msg.sender) {
+            gameList[_gameId].creatorEth = msg.value;
+        } else if (gameList[_gameId].joiner == msg.sender) {
+            gameList[_gameId].joinerEth = msg.value;
+        } else {
+            revert OutputError("Player not in that game!");
+        }
     }
 
     function submitBoard(uint256 _gameId, bytes32 _merkleRoot) public {

@@ -249,7 +249,15 @@ App = {
           $('#acceptAmount').hide();
           $('#waitingOpponent').hide();
 
-          App.createBoardTable();
+          App.contracts.BattleShipGame.deployed().then(async function (instance) {
+            newInstance = instance
+            return newInstance.sendEth(events.args._gameId.toNumber(), { value: (ethAmmount) });
+          }).then(async function (logArray) {
+            App.createBoardTable();
+          }).catch(function (err) {
+            //alert("ERROR: " + err.message);
+            console.log(err.message);
+          });
         }
         else if (events.event == "ShootShip" && events.args._gameId.toNumber() == gameId && events.args._address == web3.eth.defaultAccount && events.blockNumber != lastBlock) {
           lastBlock = events.blockNumber;
