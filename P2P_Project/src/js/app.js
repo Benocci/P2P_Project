@@ -16,7 +16,7 @@ var gameStarted = false;
 var iHostTheGame = null;
 var isMyTurn = null;
 
-const sumbitBoardFunction = () => {App.submitBoard()};
+const submitBoardFunction = () => {App.submitBoard()};
 
 App = {
   web3Provider: null,
@@ -296,10 +296,8 @@ App = {
           );
 
           var result = events.args._result.toNumber();
-
-          var checkResult = events.args._merkleCheck.toNumber();
-
-          console.log("DEBUG: Sparo avvenuto sulla cella [" + cellRow + "][" + cellCol + "], risultato: " + result + ", controllo: " + checkResult);
+          console.log("DEBUG: RISULTATO SPARO: " + result);
+          console.log("DEBUG: NAVI RIMANENTI: " + events.args._shipsRemaining.toNumber());
 
           if (result === 0) {
             cell.innerHTML = "✖";
@@ -311,7 +309,28 @@ App = {
 
           isMyTurn = false;
         }
+        else if (events.event == "GameEnded" && events.args._gameId.toNumber() == gameId) {
 
+          if(events.args._reason == 0){
+            if(events.args._winner == web3.eth.defaultAccount){
+              $('#messageInfo').text("The opponent is cheating, you win!");
+            }
+            else{
+              $('#messageInfo').text("You are cheating, your opponent wins!");
+            }
+          }
+          else if(events.args._reason == 1){
+            if(events.args._winner == web3.eth.defaultAccount){
+              $('#messageInfo').text("Game ended correctly, you win!");
+            }
+            else{
+              $('#messageInfo').text("The game is over, your opponent wins!");
+            }          
+          }
+
+          $('#endBtn').show();
+          document.getElementById('endBtn').addEventListener("click", () => {location.reload()});
+        }
       });
   },
 
@@ -382,7 +401,7 @@ App = {
       $('#submitInfo').text("Ship removed, " + remainingShips + " remaining!");
       const submit = document.getElementById('submitBtn');
       submit.style.color = "hsl(221, 100%, 50%)";
-      submit.removeEventListener("click", sumbitBoardFunction);
+      submit.removeEventListener("click", submitBoardFunction);
     }
 
     // when all the ship are placed, submit button enable
@@ -390,7 +409,7 @@ App = {
       $('#submitInfo').text("All ships placed, click here to submit your board!");
       const submit = document.getElementById('submitBtn');
       submit.style.color = "red";
-      submit.addEventListener("click", sumbitBoardFunction);
+      submit.addEventListener("click", submitBoardFunction);
     }
   },
 

@@ -11,6 +11,8 @@ contract BattleShipGame {
         uint256 ethAmount;
         bytes32 creatorMerkleRoot;
         bytes32 joinerMerkleRoot;
+        uint256 creatorNumShips;
+        uint256 joinerNumShips;
     }
 
     mapping(uint256 => gameInfo) public gameList; // map of game's ID (gameId => information of that game)
@@ -42,7 +44,7 @@ contract BattleShipGame {
 
     event StartGame(
         uint256 indexed _gameId,
-        bytes32 _merkleRootCreator, 
+        bytes32 _merkleRootCreator,
         bytes32 _merkleRootJoiner
     );
 
@@ -58,8 +60,15 @@ contract BattleShipGame {
         address _address,
         uint256 _row,
         uint256 _col,
-        uint256 _merkleCheck,
-        uint256 _result
+        uint256 _result,
+        uint256 _shipsRemaining
+    );
+
+    event GameEnded(
+        uint256 indexed _gameId,
+        address _winner,
+        address _loser,
+        uint256 _reason
     );
 
     constructor() {}
@@ -129,7 +138,9 @@ contract BattleShipGame {
             _shipNum,
             _ethAmount,
             0,
-            0
+            0,
+            _shipNum,
+            _shipNum
         );
         avaibleGame.push(newGameId);
         emit GameCreated(newGameId);
@@ -207,7 +218,11 @@ contract BattleShipGame {
             revert OutputError({myError: "Player not in that game!"});
         }
 
-        emit StartGame(_gameId, gameList[_gameId].creatorMerkleRoot, gameList[_gameId].joinerMerkleRoot);
+        emit StartGame(
+            _gameId,
+            gameList[_gameId].creatorMerkleRoot,
+            gameList[_gameId].joinerMerkleRoot
+        );
     }
 
     function shoot(uint256 _gameId, uint256 _row, uint256 _col) public {
@@ -251,27 +266,66 @@ contract BattleShipGame {
             merkleRoot = gameList[_gameId].joinerMerkleRoot;
         }
 
-        uint256 check;
         bytes32 hashValue = _hash;
 
         uint256 index = _row * gameList[_gameId].boardSize + _col;
         for (uint i = 0; i < _merkleProof.length; i++) {
             if (index % 2 == 0) {
-                hashValue = keccak256(abi.encodePacked(hashValue, _merkleProof[i]));
+                hashValue = keccak256(
+                    abi.encodePacked(hashValue, _merkleProof[i])
+                );
             } else {
-                hashValue = keccak256(abi.encodePacked(_merkleProof[i], hashValue));
+                hashValue = keccak256(
+                    abi.encodePacked(_merkleProof[i], hashValue)
+                );
             }
 
-            index = index/2;
+            index = index / 2;
         }
 
-        if(merkleRoot == hashValue){
-            check = 1;
-        }
-        else{
-            check = 0;
+        uint256 shipsRemaining = 100;
+        if (merkleRoot == hashValue) {
+            // validated shoot
+            if (msg.sender == gameList[_gameId].creator) {
+                if (_result == 1) {
+                    gameList[_gameId].joinerNumShips =
+                        gameList[_gameId].joinerNumShips -
+                        1;
+                }
+                shipsRemaining = gameList[_gameId].joinerNumShips;
+            } else {
+                if (_result == 1) {
+                    gameList[_gameId].creatorNumShips =
+                        gameList[_gameId].creatorNumShips -
+                        1;
+                }
+                shipsRemaining = gameList[_gameId].creatorNumShips;
+            }
+
+            emit ShootResult(
+                _gameId,
+                opponentAddress,
+                _row,
+                _col,
+                _result,
+                shipsRemaining
+            );
+        } else {
+            // invlidated shoot
+            emit GameEnded(_gameId, msg.sender, opponentAddress, 0);
+            //payable(opponentAddress).transfer(gameList[_gameId].ethAmount * 2);
+            return;
         }
 
-        emit ShootResult(_gameId, opponentAddress, _row, _col, check, _result);
+        if (shipsRemaining <= 0) {
+            //payable(opponentAddress).transfer(gameList[_gameId].ethAmount * 2);
+
+            emit GameEnded(
+                _gameId,
+                opponentAddress,
+                msg.sender,
+                1
+            );
+        }
     }
 }
