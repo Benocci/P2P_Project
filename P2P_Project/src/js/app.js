@@ -296,8 +296,6 @@ App = {
           );
 
           var result = events.args._result.toNumber();
-          console.log("DEBUG: RISULTATO SPARO: " + result);
-          console.log("DEBUG: NAVI RIMANENTI: " + events.args._shipsRemaining.toNumber());
 
           if (result === 0) {
             cell.innerHTML = "✖";
@@ -325,7 +323,7 @@ App = {
             }
             else{
               $('#messageInfo').text("The game is over, your opponent wins!");
-            }          
+            }
           }
 
           $('#endBtn').show();

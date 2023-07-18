@@ -84,7 +84,7 @@ contract BattleShipGame {
         uint256 index;
         bool find = false;
 
-        // loop the avaible game until find the index of the chosen one
+        // loop through the avaible game until find the index of the chosen one
         for (uint i = 0; i < avaibleGame.length; i++) {
             if (avaibleGame[i] == _gameId) {
                 index = i;
@@ -129,6 +129,12 @@ contract BattleShipGame {
         uint256 _ethAmount
     ) public {
         // create a new game
+
+        // Check if the board size and ship number are valid
+        if (_boardSize <= 0 || _shipNum <= 0) {
+            revert OutputError("Invalid board size or ship number!");
+        }
+
         uint256 newGameId = getId();
 
         gameList[newGameId] = gameInfo(
@@ -150,7 +156,7 @@ contract BattleShipGame {
         // function to join a game
         // check if there are avaible game
         if (avaibleGame.length < 1) {
-            revert OutputError({myError: "No open games!"});
+            revert OutputError("No open games!");
         }
 
         uint256 chosenGameId;
@@ -164,16 +170,16 @@ contract BattleShipGame {
             bool find = removeFromArray(chosenGameId);
 
             if (!find) {
-                revert OutputError({myError: "This game does not exist!"});
+                revert OutputError("This game does not exist!");
             }
         }
 
         if (chosenGameId <= 0) {
-            revert OutputError({myError: "Chosen id negative!"});
+            revert OutputError("Chosen id negative!");
         }
 
         if (gameList[chosenGameId].joiner != address(0)) {
-            revert OutputError({myError: "Game already taken!"});
+            revert OutputError("Game already taken!");
         }
         gameList[chosenGameId].joiner = msg.sender;
 
@@ -189,6 +195,17 @@ contract BattleShipGame {
 
     function amountEthDecision(uint256 _gameId, bool _response) public {
         // function to accept or refuse the eth amount
+
+        // Check if the game ID is valid
+        if (_gameId <= 0) {
+            revert OutputError("Game id is negative!");
+        }
+
+        // Check if the sender is either the creator or the joiner of the game
+        if (gameList[_gameId].creator != msg.sender && gameList[_gameId].joiner != msg.sender) {
+            revert OutputError("Player not in that game!");
+        }
+
         if (!_response) {
             // refuse response
             gameList[_gameId].joiner = address(0);
@@ -205,9 +222,28 @@ contract BattleShipGame {
 
     function submitBoard(uint256 _gameId, bytes32 _merkleRoot) public {
         // function to submit the board
-        //TODO: check
+
+        // Check if the game ID is valid
         if (_gameId <= 0) {
-            revert OutputError({myError: "Game id is negative!"});
+            revert OutputError("Game id is negative!");
+        }
+
+        // Check if the sender is either the creator or the joiner of the game
+        if (
+            gameList[_gameId].creator != msg.sender &&
+            gameList[_gameId].joiner != msg.sender
+        ) {
+            revert OutputError("Player not in that game!");
+        }
+
+        // Check if the board is not already submitted
+        if (
+            (gameList[_gameId].creator == msg.sender &&
+                gameList[_gameId].creatorMerkleRoot != 0) ||
+            (gameList[_gameId].joiner == msg.sender &&
+                gameList[_gameId].joinerMerkleRoot != 0)
+        ) {
+            revert OutputError("Board already submitted!");
         }
 
         if (gameList[_gameId].creator == msg.sender) {
@@ -215,7 +251,7 @@ contract BattleShipGame {
         } else if (gameList[_gameId].joiner == msg.sender) {
             gameList[_gameId].joinerMerkleRoot = _merkleRoot;
         } else {
-            revert OutputError({myError: "Player not in that game!"});
+            revert OutputError("Player not in that game!");
         }
 
         emit StartGame(
@@ -227,8 +263,18 @@ contract BattleShipGame {
 
     function shoot(uint256 _gameId, uint256 _row, uint256 _col) public {
         // function to communicate the coordinates of the fired cell
+        
+        // Check if the game ID is valid
         if (_gameId <= 0) {
-            revert OutputError({myError: "Game id is negative!"});
+            revert OutputError("Game id is negative!");
+        }
+
+        // Check if the sender is either the creator or the joiner of the game
+        if (
+            gameList[_gameId].creator != msg.sender &&
+            gameList[_gameId].joiner != msg.sender
+        ) {
+            revert OutputError("Player not in that game!");
         }
 
         // take the opponent address for comunicate who was shot
@@ -249,10 +295,20 @@ contract BattleShipGame {
         uint256 _result,
         bytes32 _hash,
         bytes32[] memory _merkleProof
-    ) public {
+    ) public payable {
         // function to comunicate the result of the shot
+        
+        // Check if the game ID is valid
         if (_gameId <= 0) {
-            revert OutputError({myError: "Game id is negative!"});
+            revert OutputError("Game id is negative!");
+        }
+
+        // Check if the sender is either the creator or the joiner of the game
+        if (
+            gameList[_gameId].creator != msg.sender &&
+            gameList[_gameId].joiner != msg.sender
+        ) {
+            revert OutputError("Player not in that game!");
         }
 
         // take the opponent address for comunicate who fired the shot
@@ -312,20 +368,15 @@ contract BattleShipGame {
             );
         } else {
             // invlidated shoot
-            emit GameEnded(_gameId, msg.sender, opponentAddress, 0);
-            //payable(opponentAddress).transfer(gameList[_gameId].ethAmount * 2);
+            emit GameEnded(_gameId, opponentAddress, msg.sender, 0);
+            payable(opponentAddress).transfer(gameList[_gameId].ethAmount * 2);
             return;
         }
 
         if (shipsRemaining <= 0) {
-            //payable(opponentAddress).transfer(gameList[_gameId].ethAmount * 2);
+            payable(opponentAddress).transfer(gameList[_gameId].ethAmount * 2);
 
-            emit GameEnded(
-                _gameId,
-                opponentAddress,
-                msg.sender,
-                1
-            );
+            emit GameEnded(_gameId, opponentAddress, msg.sender, 1);
         }
     }
 }
