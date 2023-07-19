@@ -17,6 +17,7 @@ var iHostTheGame = null;
 var isMyTurn = null;
 
 const submitBoardFunction = () => {App.submitBoard()};
+const accusationFunction = () => {App.accuseOpponent()};
 
 App = {
   web3Provider: null,
@@ -335,6 +336,7 @@ App = {
           }
 
           $('#endBtn').show();
+          $('#accusationBtn').hide();
           document.getElementById('endBtn').addEventListener("click", () => {location.reload()});
         }
       });
@@ -447,14 +449,26 @@ App = {
       }
       $('#opponentBoard').show();
       $('#submitBtn').hide();
+      $('#accusationBtn').show();
+      //document.getElementById('accusationBtn').addEventListener("click", accusationFunction);
 
       gameStarted = true;
       App.startBattleFase();
     }).catch(function (err) {
-      //alert("ERROR: " + err.message);
       console.log(err.message);
     });
 
+  },
+
+  accuseOpponent: function () { // function to accuse the opponent
+    App.contracts.BattleShipGame.deployed().then(async function (instance) {
+      newInstance = instance
+      return newInstance.accuseOpponent(gameId);
+    }).then(function (reciept) {
+      document.getElementById('accusationBtn').removeEventListener("click", accusationFunction);
+    }).catch(function (err) {
+      console.log(err.message);
+    });
   },
 
   startBattleFase: function () { // function to show the opponentBoard and start the shoot fase

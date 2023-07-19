@@ -66,6 +66,11 @@ contract BattleShipGame {
         uint256 _shipsRemaining
     );
 
+    // TODO: develop the accusation
+    event AccusationTrigger( 
+        uint256 indexed _gameId
+    );
+
     event GameEnded(
         uint256 indexed _gameId,
         address _winner,
@@ -409,5 +414,24 @@ contract BattleShipGame {
 
             emit GameEnded(_gameId, opponentAddress, msg.sender, 1);
         }
+    }
+
+    function accuseOpponent(uint256 _gameId) public payable {
+        // function to accuse the opponent of having left
+
+        // Check if the game ID is valid
+        if (_gameId <= 0) {
+            revert OutputError("Game id is negative!");
+        }
+
+        // Check if the sender is either the creator or the joiner of the game
+        if (
+            gameList[_gameId].creator != msg.sender &&
+            gameList[_gameId].joiner != msg.sender
+        ) {
+            revert OutputError("Player not in that game!");
+        }
+
+        // TODO: develop the accusation
     }
 }
