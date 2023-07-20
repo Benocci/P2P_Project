@@ -15,6 +15,8 @@ contract BattleShipGame {
         bytes32 joinerMerkleRoot;
         uint256 creatorNumShips;
         uint256 joinerNumShips;
+        uint256 accusationTime;
+        address accuser;
     }
 
     mapping(uint256 => gameInfo) public gameList; // map of game's ID (gameId => information of that game)
@@ -66,9 +68,10 @@ contract BattleShipGame {
         uint256 _shipsRemaining
     );
 
-    // TODO: develop the accusation
     event AccusationTrigger( 
-        uint256 indexed _gameId
+        uint256 indexed _gameId,
+        address _accused,
+        address _accuser
     );
 
     event GameEnded(
@@ -155,7 +158,9 @@ contract BattleShipGame {
             0,
             0,
             _shipNum,
-            _shipNum
+            _shipNum,
+            0,
+            address(0)
         );
         avaibleGame.push(newGameId);
         emit GameCreated(newGameId);
@@ -313,6 +318,8 @@ contract BattleShipGame {
             revert OutputError("Player not in that game!");
         }
 
+        gameList[_gameId].accuser = address(0);
+        gameList[_gameId].accusationTime = 0;
         // take the opponent address for comunicate who was shot
         address opponentAddress;
         if (msg.sender == gameList[_gameId].creator) {
@@ -432,6 +439,39 @@ contract BattleShipGame {
             revert OutputError("Player not in that game!");
         }
 
-        // TODO: develop the accusation
+        if(gameList[_gameId].accuser == address(0)){
+            gameList[_gameId].accuser = msg.sender;
+            gameList[_gameId].accusationTime = block.number+5;
+
+            if(gameList[_gameId].accuser == gameList[_gameId].creator){
+                emit AccusationTrigger(_gameId, gameList[_gameId].joiner, gameList[_gameId].creator);
+            }
+            else if (gameList[_gameId].accuser == gameList[_gameId].joiner){
+                emit AccusationTrigger(_gameId, gameList[_gameId].creator, gameList[_gameId].joiner);
+            } else {
+                return;
+            }
+        }
+        else{
+            address accused;
+            if(gameList[_gameId].accuser == gameList[_gameId].creator){
+                accused = gameList[_gameId].joiner;
+            }
+            else if (gameList[_gameId].accuser == gameList[_gameId].joiner){
+                accused = gameList[_gameId].creator;
+            }
+            else{
+                return;
+            }
+
+            if(gameList[_gameId].accusationTime <= block.number){
+                payable(gameList[_gameId].accuser).transfer(gameList[_gameId].ethAmount * 2);
+
+                emit GameEnded(_gameId, gameList[_gameId].accuser, accused, 2);
+            }
+            else{
+                emit AccusationTrigger(_gameId, gameList[_gameId].accuser, accused);
+            }
+        }
     }
 }

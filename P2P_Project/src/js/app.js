@@ -339,6 +339,14 @@ App = {
           $('#accusationBtn').hide();
           document.getElementById('endBtn').addEventListener("click", () => {location.reload()});
         }
+        else if(events.event == "AccusationTrigger" && events.args._gameId.toNumber() == gameId && events.args._accused == web3.eth.defaultAccount && events.blockNumber != lastBlock){
+          lastBlock = events.blockNumber;
+          alert("The opponent triggered a notification! If you don't play you will automatically lose the game!");
+          iWasAccused = true;
+        }
+        else if(events.event == "AccusationTrigger" && events.args._gameId.toNumber() == gameId && events.args._accuser == web3.eth.defaultAccount && events.blockNumber != lastBlock){
+          lastBlock = events.blockNumber;
+        }
       });
   },
 
@@ -450,7 +458,7 @@ App = {
       $('#opponentBoard').show();
       $('#submitBtn').hide();
       $('#accusationBtn').show();
-      //document.getElementById('accusationBtn').addEventListener("click", accusationFunction);
+      document.getElementById('accusationBtn').addEventListener("click", accusationFunction);
 
       gameStarted = true;
       App.startBattleFase();
