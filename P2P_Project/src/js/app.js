@@ -13,8 +13,8 @@ var myBoardMatrix = null;
 var opponentBoardMatrix = null;
 // bool variable:
 var gameStarted = false;
-var iHostTheGame = null;
-var isMyTurn = null;
+var iHostTheGame = false;
+var isMyTurn = false;
 
 const submitBoardFunction = () => {App.submitBoard()};
 const accusationFunction = () => {App.accuseOpponent()};
@@ -61,7 +61,7 @@ App = {
     // button to start the game creation:
     $(document).on('click', '#createNewGameBtn', App.createNewGame);
     // buttons to join a game:
-    $(document).on('click', '#joinRandomGameBtn', App.joinGame);
+    $(document).on('click', '#joinRandomGameBtn', App.joinRandomGame);
     $(document).on('click', '#joinGameBtn', App.joinSpecificGame);
 
     // button to back to main menu:
@@ -88,6 +88,10 @@ App = {
   createNewGame: function () { // function to show the create game menu
     $('#setUpNewGame').show();
     $('#createOrJoin').hide();
+  },
+
+  joinRandomGame: function () {
+    App.joinGame(true);
   },
 
   joinSpecificGame: function () { // function to show the join a specific game menu
@@ -122,7 +126,7 @@ App = {
       // call to the contract
       App.contracts.BattleShipGame.deployed().then(async function (instance) {
         newInstance = instance
-        return newInstance.createGame(boardSize, shipNumber, ethAmmount);
+        return newInstance.createGame(boardSize, shipNumber, ethAmmount, { value: (ethAmmount) });
       }).then(async function (logArray) { // callback to the contract function createGame
         gameId = logArray.logs[0].args._gameId.toNumber(); // get the gameId from the event emitted in the contract
         if (gameId < 0) {
@@ -158,12 +162,15 @@ App = {
     }
   },
 
-  joinGame: function () { // function to handle a join game
-    var selectedGameId = $('#selectedGameId').val();
+  joinGame: function (isRandom) { // function to handle a join game
+    var selectedGameId;
 
-    if (!selectedGameId) { // check on the gameId
+    if (isRandom == true) { // check on the gameId
       selectedGameId = 0;
       $('#setUpNewGame').hide();
+    }
+    else{
+      selectedGameId = $('#selectedGameId').val();
     }
 
     App.contracts.BattleShipGame.deployed().then(async function (instance) {
@@ -211,7 +218,7 @@ App = {
   acceptEthAmount: function () { // function to accept the ethereum amount
     App.contracts.BattleShipGame.deployed().then(async function (instance) {
       newInstance = instance
-      return newInstance.amountEthDecision(gameId, true);
+      return newInstance.amountEthDecision(gameId, true, { value: (ethAmmount) });
     }).then(async function (logArray) {
       App.handleEvents();
     }).catch(function (err) {
@@ -250,15 +257,8 @@ App = {
           $('#acceptAmount').hide();
           $('#waitingOpponent').hide();
 
-          App.contracts.BattleShipGame.deployed().then(async function (instance) {
-            newInstance = instance
-            return newInstance.sendEth(events.args._gameId.toNumber(), { value: (ethAmmount) });
-          }).then(async function (logArray) {
-            App.createBoardTable();
-          }).catch(function (err) {
-            //alert("ERROR: " + err.message);
-            console.log(err.message);
-          });
+          
+          App.createBoardTable();
         }
         else if (events.event == "ShootShip" && events.args._gameId.toNumber() == gameId && events.args._address == web3.eth.defaultAccount && events.blockNumber != lastBlock) {
           lastBlock = events.blockNumber;
@@ -313,8 +313,6 @@ App = {
             cell.innerHTML = '💥';
             $('#messageInfo').text("You hit the shot, it is your opponent's turn!");
           }
-
-          isMyTurn = false;
         }
         else if (events.event == "GameEnded" && events.args._gameId.toNumber() == gameId) {
 
@@ -346,6 +344,10 @@ App = {
         }
         else if(events.event == "AccusationTrigger" && events.args._gameId.toNumber() == gameId && events.args._accuser == web3.eth.defaultAccount && events.blockNumber != lastBlock){
           lastBlock = events.blockNumber;
+        }
+        else if(events.event == "DebugInfo" && events.args._gameId.toNumber() == gameId){
+          console.log("DEBUG: host: " + iHostTheGame + " sender: " + events.args._sender + " myAddress: " + web3.eth.defaultAccount + 
+          " creator: " + events.args._opponent + " bettedETH: " + events.args._bettedETH + " shipsRemaining: " + events.args._shipsRemaining);
         }
       });
   },
@@ -524,6 +526,8 @@ App = {
       return;
     }
     opponentBoardMatrix[cellRow][cellCol] = 1;
+    isMyTurn = false;
+    $('#messageInfo').text("Shot sent, awaiting response from opponent!");
 
     App.contracts.BattleShipGame.deployed().then(async function (instance) {
       newInstance = instance

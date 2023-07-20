@@ -9,8 +9,7 @@ contract BattleShipGame {
         uint256 boardSize;
         uint256 shipNum;
         uint256 ethAmount;
-        uint256 creatorEth;
-        uint256 joinerEth;
+        uint256 ethBetted;
         bytes32 creatorMerkleRoot;
         bytes32 joinerMerkleRoot;
         uint256 creatorNumShips;
@@ -68,7 +67,7 @@ contract BattleShipGame {
         uint256 _shipsRemaining
     );
 
-    event AccusationTrigger( 
+    event AccusationTrigger(
         uint256 indexed _gameId,
         address _accused,
         address _accuser
@@ -79,6 +78,14 @@ contract BattleShipGame {
         address _winner,
         address _loser,
         uint256 _reason
+    );
+
+    event DebugInfo(
+        uint256 indexed _gameId,
+        address _sender,
+        address _opponent,
+        uint256 _bettedETH,
+        uint256 _shipsRemaining
     );
 
     constructor() {}
@@ -137,13 +144,15 @@ contract BattleShipGame {
         uint256 _boardSize,
         uint256 _shipNum,
         uint256 _ethAmount
-    ) public {
+    ) public payable {
         // create a new game
 
         // Check if the board size and ship number are valid
         if (_boardSize <= 0 || _shipNum <= 0) {
             revert OutputError("Invalid board size or ship number!");
         }
+
+        require(msg.value == _ethAmount, "ETH amount are wrong!");
 
         uint256 newGameId = getId();
 
@@ -156,13 +165,15 @@ contract BattleShipGame {
             0,
             0,
             0,
-            0,
             _shipNum,
             _shipNum,
             0,
             address(0)
         );
         avaibleGame.push(newGameId);
+
+        gameList[newGameId].ethBetted += msg.value;
+
         emit GameCreated(newGameId);
     }
 
@@ -195,6 +206,11 @@ contract BattleShipGame {
         if (gameList[chosenGameId].joiner != address(0)) {
             revert OutputError("Game already taken!");
         }
+
+        if (gameList[chosenGameId].creator == msg.sender) {
+            revert OutputError("You can't join a game created by yourself!");
+        }
+
         gameList[chosenGameId].joiner = msg.sender;
 
         emit GameJoined(
@@ -207,35 +223,8 @@ contract BattleShipGame {
         );
     }
 
-    function amountEthDecision(uint256 _gameId, bool _response) public {
+    function amountEthDecision(uint256 _gameId, bool _response) public payable {
         // function to accept or refuse the eth amount
-
-        // Check if the game ID is valid
-        if (_gameId <= 0) {
-            revert OutputError("Game id is negative!");
-        }
-
-        // Check if the sender is either the creator or the joiner of the game
-        if (gameList[_gameId].creator != msg.sender && gameList[_gameId].joiner != msg.sender) {
-            revert OutputError("Player not in that game!");
-        }
-
-        if (!_response) {
-            // refuse response
-            gameList[_gameId].joiner = address(0);
-            avaibleGame.push(_gameId);
-        }
-
-        emit AmountEthResponse(
-            msg.sender,
-            gameList[_gameId].ethAmount,
-            _gameId,
-            _response
-        );
-    }
-
-    function sendEth(uint256 _gameId) public payable {
-        // function to send the ETH to the contract
 
         // Check if the game ID is valid
         if (_gameId <= 0) {
@@ -250,15 +239,25 @@ contract BattleShipGame {
             revert OutputError("Player not in that game!");
         }
 
-        require(msg.value > 0, "ETH are 0!");
-
-        if (gameList[_gameId].creator == msg.sender) {
-            gameList[_gameId].creatorEth = msg.value;
-        } else if (gameList[_gameId].joiner == msg.sender) {
-            gameList[_gameId].joinerEth = msg.value;
+        if (!_response) {
+            // refuse response
+            gameList[_gameId].joiner = address(0);
+            avaibleGame.push(_gameId);
         } else {
-            revert OutputError("Player not in that game!");
+            require(
+                msg.value == gameList[_gameId].ethAmount,
+                "ETH amount are wrong!"
+            );
+
+            gameList[_gameId].ethBetted += msg.value;
         }
+
+        emit AmountEthResponse(
+            msg.sender,
+            gameList[_gameId].ethAmount,
+            _gameId,
+            _response
+        );
     }
 
     function submitBoard(uint256 _gameId, bytes32 _merkleRoot) public {
@@ -268,6 +267,7 @@ contract BattleShipGame {
         if (_gameId <= 0) {
             revert OutputError("Game id is negative!");
         }
+
 
         // Check if the sender is either the creator or the joiner of the game
         if (
@@ -304,7 +304,7 @@ contract BattleShipGame {
 
     function shoot(uint256 _gameId, uint256 _row, uint256 _col) public {
         // function to communicate the coordinates of the fired cell
-        
+
         // Check if the game ID is valid
         if (_gameId <= 0) {
             revert OutputError("Game id is negative!");
@@ -340,7 +340,7 @@ contract BattleShipGame {
         bytes32[] memory _merkleProof
     ) public payable {
         // function to comunicate the result of the shot
-        
+
         // Check if the game ID is valid
         if (_gameId <= 0) {
             revert OutputError("Game id is negative!");
@@ -382,7 +382,7 @@ contract BattleShipGame {
             index = index / 2;
         }
 
-        uint256 shipsRemaining = 100;
+        uint256 shipsRemaining;
         if (merkleRoot == hashValue) {
             // validated shoot
             if (msg.sender == gameList[_gameId].creator) {
@@ -412,12 +412,13 @@ contract BattleShipGame {
         } else {
             // invlidated shoot
             emit GameEnded(_gameId, opponentAddress, msg.sender, 0);
-            payable(opponentAddress).transfer(gameList[_gameId].ethAmount * 2);
+            payable(opponentAddress).transfer(gameList[_gameId].ethBetted);
             return;
         }
 
         if (shipsRemaining <= 0) {
-            payable(opponentAddress).transfer(gameList[_gameId].ethAmount * 2);
+
+            payable(opponentAddress).transfer(gameList[_gameId].ethBetted);
 
             emit GameEnded(_gameId, opponentAddress, msg.sender, 1);
         }
@@ -439,38 +440,62 @@ contract BattleShipGame {
             revert OutputError("Player not in that game!");
         }
 
-        if(gameList[_gameId].accuser == address(0)){
+        if (gameList[_gameId].accuser == address(0)) {
             gameList[_gameId].accuser = msg.sender;
-            gameList[_gameId].accusationTime = block.number+5;
+            gameList[_gameId].accusationTime = block.number + 5;
 
-            if(gameList[_gameId].accuser == gameList[_gameId].creator){
-                emit AccusationTrigger(_gameId, gameList[_gameId].joiner, gameList[_gameId].creator);
-            }
-            else if (gameList[_gameId].accuser == gameList[_gameId].joiner){
-                emit AccusationTrigger(_gameId, gameList[_gameId].creator, gameList[_gameId].joiner);
+            if (gameList[_gameId].accuser == gameList[_gameId].creator) {
+                emit AccusationTrigger(
+                    _gameId,
+                    gameList[_gameId].joiner,
+                    gameList[_gameId].creator
+                );
+            } else if (gameList[_gameId].accuser == gameList[_gameId].joiner) {
+                emit AccusationTrigger(
+                    _gameId,
+                    gameList[_gameId].creator,
+                    gameList[_gameId].joiner
+                );
             } else {
                 return;
             }
-        }
-        else{
-            address accused;
-            if(gameList[_gameId].accuser == gameList[_gameId].creator){
-                accused = gameList[_gameId].joiner;
-            }
-            else if (gameList[_gameId].accuser == gameList[_gameId].joiner){
-                accused = gameList[_gameId].creator;
-            }
-            else{
+        } else {
+            if (gameList[_gameId].accuser == gameList[_gameId].creator) {
+                if (gameList[_gameId].accusationTime <= block.number) {
+                    payable(gameList[_gameId].accuser).transfer(gameList[_gameId].ethBetted);
+
+                    emit GameEnded(
+                        _gameId,
+                        gameList[_gameId].accuser,
+                        gameList[_gameId].joiner,
+                        2
+                    );
+                } else {
+                    emit AccusationTrigger(
+                        _gameId,
+                        gameList[_gameId].accuser,
+                        gameList[_gameId].joiner
+                    );
+                }
+            } else if (gameList[_gameId].accuser == gameList[_gameId].joiner) {
+                if (gameList[_gameId].accusationTime <= block.number) {
+                    payable(gameList[_gameId].accuser).transfer(gameList[_gameId].ethBetted);
+
+                    emit GameEnded(
+                        _gameId,
+                        gameList[_gameId].accuser,
+                        gameList[_gameId].creator,
+                        2
+                    );
+                } else {
+                    emit AccusationTrigger(
+                        _gameId,
+                        gameList[_gameId].accuser,
+                        gameList[_gameId].creator
+                    );
+                }
+            } else {
                 return;
-            }
-
-            if(gameList[_gameId].accusationTime <= block.number){
-                payable(gameList[_gameId].accuser).transfer(gameList[_gameId].ethAmount * 2);
-
-                emit GameEnded(_gameId, gameList[_gameId].accuser, accused, 2);
-            }
-            else{
-                emit AccusationTrigger(_gameId, gameList[_gameId].accuser, accused);
             }
         }
     }
