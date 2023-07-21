@@ -19,7 +19,7 @@ contract BattleShipGame {
     }
 
     mapping(uint256 => gameInfo) public gameList; // map of game's ID (gameId => information of that game)
-    uint256[] public avaibleGame; // array with all the gameId of the avaible game
+    uint256[] public availableGames; // array with all the gameId of the avaible game
 
     uint256 public gameId = 1; // value of the next gameId
 
@@ -43,12 +43,6 @@ contract BattleShipGame {
         uint256 _amount,
         uint256 indexed _gameId,
         bool response
-    );
-
-    event StartGame(
-        uint256 indexed _gameId,
-        bytes32 _merkleRootCreator,
-        bytes32 _merkleRootJoiner
     );
 
     event ShootShip(
@@ -80,12 +74,9 @@ contract BattleShipGame {
         uint256 _reason
     );
 
-    event DebugInfo(
+    event ResolveAccuse(
         uint256 indexed _gameId,
-        address _sender,
-        address _opponent,
-        uint256 _bettedETH,
-        uint256 _shipsRemaining
+        address _accuser
     );
 
     constructor() {}
@@ -96,29 +87,29 @@ contract BattleShipGame {
         return toReturn;
     }
 
-    // function to remove an element of the array avaibleGame
+    // function to remove an element of the array availableGames
     function removeFromArray(uint256 _gameId) public returns (bool) {
         uint256 index;
         bool find = false;
 
         // loop through the avaible game until find the index of the chosen one
-        for (uint i = 0; i < avaibleGame.length; i++) {
-            if (avaibleGame[i] == _gameId) {
+        for (uint i = 0; i < availableGames.length; i++) {
+            if (availableGames[i] == _gameId) {
                 index = i;
                 find = true;
                 break;
             }
         }
 
-        if (!find || index >= avaibleGame.length) {
+        if (!find || index >= availableGames.length) {
             return find;
         }
 
-        for (uint i = index; i < avaibleGame.length - 1; i++) {
+        for (uint i = index; i < availableGames.length - 1; i++) {
             // move manually all the element
-            avaibleGame[i] = avaibleGame[i + 1];
+            availableGames[i] = availableGames[i + 1];
         }
-        delete avaibleGame[avaibleGame.length - 1]; // remove the last element
+        delete availableGames[availableGames.length - 1]; // remove the last element
         return find;
     }
 
@@ -130,11 +121,11 @@ contract BattleShipGame {
 
     // function to get the gameId of an avaible game
     function randomGame() public returns (uint256 randGameId) {
-        if (avaibleGame.length == 0) {
+        if (availableGames.length == 0) {
             return 0;
         }
 
-        randGameId = avaibleGame[getRandomNumber(avaibleGame.length)];
+        randGameId = availableGames[getRandomNumber(availableGames.length)];
         removeFromArray(randGameId);
         return randGameId;
     }
@@ -170,7 +161,7 @@ contract BattleShipGame {
             0,
             address(0)
         );
-        avaibleGame.push(newGameId);
+        availableGames.push(newGameId);
 
         gameList[newGameId].ethBetted += msg.value;
 
@@ -180,7 +171,7 @@ contract BattleShipGame {
     function joinGame(uint256 _gameId) public {
         // function to join a game
         // check if there are avaible game
-        if (avaibleGame.length < 1) {
+        if (availableGames.length < 1) {
             revert OutputError("No open games!");
         }
 
@@ -242,7 +233,7 @@ contract BattleShipGame {
         if (!_response) {
             // refuse response
             gameList[_gameId].joiner = address(0);
-            avaibleGame.push(_gameId);
+            availableGames.push(_gameId);
         } else {
             require(
                 msg.value == gameList[_gameId].ethAmount,
@@ -267,7 +258,6 @@ contract BattleShipGame {
         if (_gameId <= 0) {
             revert OutputError("Game id is negative!");
         }
-
 
         // Check if the sender is either the creator or the joiner of the game
         if (
@@ -294,12 +284,6 @@ contract BattleShipGame {
         } else {
             revert OutputError("Player not in that game!");
         }
-
-        emit StartGame(
-            _gameId,
-            gameList[_gameId].creatorMerkleRoot,
-            gameList[_gameId].joinerMerkleRoot
-        );
     }
 
     function shoot(uint256 _gameId, uint256 _row, uint256 _col) public {
@@ -318,8 +302,12 @@ contract BattleShipGame {
             revert OutputError("Player not in that game!");
         }
 
-        gameList[_gameId].accuser = address(0);
-        gameList[_gameId].accusationTime = 0;
+        if(gameList[_gameId].accuser != address(0)){
+            emit ResolveAccuse(_gameId, gameList[_gameId].accuser);
+            gameList[_gameId].accuser = address(0);
+            gameList[_gameId].accusationTime = 0;
+        }
+        
         // take the opponent address for comunicate who was shot
         address opponentAddress;
         if (msg.sender == gameList[_gameId].creator) {
@@ -417,7 +405,6 @@ contract BattleShipGame {
         }
 
         if (shipsRemaining <= 0) {
-
             payable(opponentAddress).transfer(gameList[_gameId].ethBetted);
 
             emit GameEnded(_gameId, opponentAddress, msg.sender, 1);
@@ -456,47 +443,39 @@ contract BattleShipGame {
                     gameList[_gameId].creator,
                     gameList[_gameId].joiner
                 );
-            } else {
-                return;
+            }
+        }
+    }
+
+    function verifyAccuse(uint256 _gameId) public payable {
+        if (gameList[_gameId].accuser == gameList[_gameId].creator) {
+            if (gameList[_gameId].accusationTime <= block.number) {
+                payable(gameList[_gameId].accuser).transfer(
+                    gameList[_gameId].ethBetted
+                );
+
+                emit GameEnded(
+                    _gameId,
+                    gameList[_gameId].accuser,
+                    gameList[_gameId].joiner,
+                    2
+                );
+            }
+        } else if (gameList[_gameId].accuser == gameList[_gameId].joiner) {
+            if (gameList[_gameId].accusationTime <= block.number) {
+                payable(gameList[_gameId].accuser).transfer(
+                    gameList[_gameId].ethBetted
+                );
+
+                emit GameEnded(
+                    _gameId,
+                    gameList[_gameId].accuser,
+                    gameList[_gameId].creator,
+                    2
+                );
             }
         } else {
-            if (gameList[_gameId].accuser == gameList[_gameId].creator) {
-                if (gameList[_gameId].accusationTime <= block.number) {
-                    payable(gameList[_gameId].accuser).transfer(gameList[_gameId].ethBetted);
-
-                    emit GameEnded(
-                        _gameId,
-                        gameList[_gameId].accuser,
-                        gameList[_gameId].joiner,
-                        2
-                    );
-                } else {
-                    emit AccusationTrigger(
-                        _gameId,
-                        gameList[_gameId].accuser,
-                        gameList[_gameId].joiner
-                    );
-                }
-            } else if (gameList[_gameId].accuser == gameList[_gameId].joiner) {
-                if (gameList[_gameId].accusationTime <= block.number) {
-                    payable(gameList[_gameId].accuser).transfer(gameList[_gameId].ethBetted);
-
-                    emit GameEnded(
-                        _gameId,
-                        gameList[_gameId].accuser,
-                        gameList[_gameId].creator,
-                        2
-                    );
-                } else {
-                    emit AccusationTrigger(
-                        _gameId,
-                        gameList[_gameId].accuser,
-                        gameList[_gameId].creator
-                    );
-                }
-            } else {
-                return;
-            }
+            return;
         }
     }
 }

@@ -15,6 +15,7 @@ var opponentBoardMatrix = null;
 var gameStarted = false;
 var iHostTheGame = false;
 var isMyTurn = false;
+var iWasAccused = false;
 
 const submitBoardFunction = () => {App.submitBoard()};
 const accusationFunction = () => {App.accuseOpponent()};
@@ -242,6 +243,7 @@ App = {
 
   handleEvents: async function () { // function to handle the event received from an opponent
     let lastBlock = null;
+    let accusationBlock = null;
 
     await newInstance.allEvents(
       (err, events) => {
@@ -282,6 +284,9 @@ App = {
             myShipsHitted++;
           }
 
+          document.getElementById('accusationBtn').addEventListener("click", accusationFunction);
+          $('#accusationInfo').text("Accuse the opponent to have left the game!");
+
           var merkleProof = App.createMerkleProof(cellRow, cellCol);
           var hash = App.getHash(cellRow, cellCol);
 
@@ -314,7 +319,8 @@ App = {
             $('#messageInfo').text("You hit the shot, it is your opponent's turn!");
           }
         }
-        else if (events.event == "GameEnded" && events.args._gameId.toNumber() == gameId) {
+        else if (events.event == "GameEnded" && events.args._gameId.toNumber() == gameId && events.blockNumber != lastBlock) {
+          lastBlock = events.blockNumber;
 
           if(events.args._reason == 0){
             if(events.args._winner == web3.eth.defaultAccount){
@@ -332,6 +338,14 @@ App = {
               $('#messageInfo').text("The game is over, your opponent wins!");
             }
           }
+          else if(events.args._reason == 2){
+            if(events.args._winner == web3.eth.defaultAccount){
+              $('#messageInfo').text("Your opponent has left the game, you win!");
+            }
+            else{
+              $('#messageInfo').text("You lose for inactivity!");
+            }
+          }
 
           $('#endBtn').show();
           $('#accusationBtn').hide();
@@ -339,16 +353,30 @@ App = {
         }
         else if(events.event == "AccusationTrigger" && events.args._gameId.toNumber() == gameId && events.args._accused == web3.eth.defaultAccount && events.blockNumber != lastBlock){
           lastBlock = events.blockNumber;
-          alert("The opponent triggered a notification! If you don't play you will automatically lose the game!");
+          $('#accusationInfo').text("The opponent triggered a notification! If you don't play you will automatically lose the game!");
+          document.getElementById('accusationBtn').removeEventListener("click", accusationFunction);
           iWasAccused = true;
         }
         else if(events.event == "AccusationTrigger" && events.args._gameId.toNumber() == gameId && events.args._accuser == web3.eth.defaultAccount && events.blockNumber != lastBlock){
           lastBlock = events.blockNumber;
+          accusationBlock = events.blockNumber + 5;
         }
-        else if(events.event == "DebugInfo" && events.args._gameId.toNumber() == gameId){
-          console.log("DEBUG: host: " + iHostTheGame + " sender: " + events.args._sender + " myAddress: " + web3.eth.defaultAccount + 
-          " creator: " + events.args._opponent + " bettedETH: " + events.args._bettedETH + " shipsRemaining: " + events.args._shipsRemaining);
+        else if(events.event == "ResolveAccuse" && events.args._gameId.toNumber() == gameId && events.args._accuser == web3.eth.defaultAccount && events.blockNumber != lastBlock){
+          accusationBlock = null;
         }
+
+        if(accusationBlock != null){
+          if(accusationBlock >= events.blockNumber){
+            App.contracts.BattleShipGame.deployed().then(async function (instance) {
+              newInstance = instance
+              return newInstance.verifyAccuse(gameId);
+            }).then(function (reciept) {
+            }).catch(function (err) {
+              console.log(err.message);
+            });
+          }
+        }
+        
       });
   },
 
@@ -476,6 +504,7 @@ App = {
       return newInstance.accuseOpponent(gameId);
     }).then(function (reciept) {
       document.getElementById('accusationBtn').removeEventListener("click", accusationFunction);
+      $('#accusationInfo').text("You accuse your opponent, wait for responce!");
     }).catch(function (err) {
       console.log(err.message);
     });
@@ -527,7 +556,13 @@ App = {
     }
     opponentBoardMatrix[cellRow][cellCol] = 1;
     isMyTurn = false;
-    $('#messageInfo').text("Shot sent, awaiting response from opponent!");
+    $('#messageInfo').text("Shot sent, awaiting response from the opponent!");
+
+    if(iWasAccused){
+      document.getElementById('accusationBtn').addEventListener("click", accusationFunction);
+      $('#accusationInfo').text("Accuse the opponent to have left the game!");
+      iWasAccused = false;
+    }
 
     App.contracts.BattleShipGame.deployed().then(async function (instance) {
       newInstance = instance
