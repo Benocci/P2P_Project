@@ -48,7 +48,7 @@ App = {
     return App.initContract();
   },
 
-  initContract: function () {
+  initContract: async function () {
     $.getJSON("BattleShipGame.json", function (data) {
       var BattleShipGameArtifact = data;
       App.contracts.BattleShipGame = TruffleContract(BattleShipGameArtifact);
@@ -499,6 +499,11 @@ App = {
   },
 
   accuseOpponent: function () { // function to accuse the opponent
+    if(isMyTurn){
+      alert("You can accuse the opponent in your turn!");
+      return;
+    }
+
     App.contracts.BattleShipGame.deployed().then(async function (instance) {
       newInstance = instance
       return newInstance.accuseOpponent(gameId);

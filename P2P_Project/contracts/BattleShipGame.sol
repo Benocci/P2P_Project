@@ -130,6 +130,11 @@ contract BattleShipGame {
         return randGameId;
     }
 
+    // GAS EVALUATION:
+    //  with boardSize=4, shipNum=3, ethAmount=2:
+    //    - Gas used: 222881
+    //    - Total Price: 0.00033432 ETH
+    //
     function createGame(
         // function to create a new game
         uint256 _boardSize,
@@ -168,6 +173,14 @@ contract BattleShipGame {
         emit GameCreated(newGameId);
     }
 
+    // GAS EVALUATION:
+    //  - specificGame:
+    //    - Gas used: 68143
+    //    - Total Price: 0.00010221 ETH
+    //
+    //  - randomGame:
+    //    - Gas used: 61738
+    //    - Total Price: 0.00009261 ETH 
     function joinGame(uint256 _gameId) public {
         // function to join a game
         // check if there are avaible game
@@ -214,6 +227,11 @@ contract BattleShipGame {
         );
     }
 
+    // GAS EVALUATION:
+    //  - positive response:
+    //    - Gas used: 36545
+    //    - Total Price: 0.00005482 ETH
+    //
     function amountEthDecision(uint256 _gameId, bool _response) public payable {
         // function to accept or refuse the eth amount
 
@@ -251,6 +269,10 @@ contract BattleShipGame {
         );
     }
 
+    // GAS EVALUATION:
+    //    - Gas used: 49767 - 50255
+    //    - Total Price: 0.00007465 - 0.00007538 ETH
+    //
     function submitBoard(uint256 _gameId, bytes32 _merkleRoot) public {
         // function to submit the board
 
@@ -286,6 +308,10 @@ contract BattleShipGame {
         }
     }
 
+    // GAS EVALUATION:
+    //    - Gas used: 31670
+    //    - Total Price: 0.0000475 ETH
+    //
     function shoot(uint256 _gameId, uint256 _row, uint256 _col) public {
         // function to communicate the coordinates of the fired cell
 
@@ -319,6 +345,10 @@ contract BattleShipGame {
         emit ShootShip(_gameId, opponentAddress, _row, _col);
     }
 
+    // GAS EVALUATION:
+    //    - Gas used: 47020
+    //    - Total Price: 0.00007053 ETH
+    //
     function shootResult(
         uint256 _gameId,
         uint256 _row,
@@ -411,6 +441,10 @@ contract BattleShipGame {
         }
     }
 
+    // GAS EVALUATION:
+    //    - Gas used: 73799
+    //    - Total Price: 0.0001107 ETH
+    //
     function accuseOpponent(uint256 _gameId) public payable {
         // function to accuse the opponent of having left
 
@@ -447,6 +481,10 @@ contract BattleShipGame {
         }
     }
 
+    // GAS EVALUATION:
+    //    - Gas used: 28303
+    //    - Total Price: 0.00004245 ETH
+    //
     function verifyAccuse(uint256 _gameId) public payable {
         if (gameList[_gameId].accuser == gameList[_gameId].creator) {
             if (gameList[_gameId].accusationTime <= block.number) {
