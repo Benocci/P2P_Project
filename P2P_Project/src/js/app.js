@@ -178,6 +178,7 @@ App = {
       newInstance = instance
       return newInstance.joinGame(selectedGameId);
     }).then(async function (logArray) { // callback to the contract function joinGame
+      
       // get all the value from the event emitted in the smart contract:
       gameId = logArray.logs[0].args._gameId.toNumber();
       ethAmmount = logArray.logs[0].args._ethAmount.toNumber();
@@ -196,7 +197,6 @@ App = {
           opponentBoardMatrix[i][j] = 0;
         }
       }
-
 
       // accept Ethereum amount:
       App.showAcceptEthAmount();
@@ -319,7 +319,7 @@ App = {
             $('#messageInfo').text("You hit the shot, it is your opponent's turn!");
           }
         }
-        else if (events.event == "GameEnded" && events.args._gameId.toNumber() == gameId && events.blockNumber != lastBlock) {
+        else if (events.event == "GameEnded" && events.args._gameId.toNumber() == gameId) {
           lastBlock = events.blockNumber;
 
           if(events.args._reason == 0){
@@ -363,6 +363,9 @@ App = {
         }
         else if(events.event == "ResolveAccuse" && events.args._gameId.toNumber() == gameId && events.args._accuser == web3.eth.defaultAccount && events.blockNumber != lastBlock){
           accusationBlock = null;
+        }
+        else if(events.event == "DebugInfo"){
+          console.log("DEBUG: Id inviato:" + events.args._gameId + " Id creato: " + events.args._ID + " numero di ID nell'array " + events.args._arraySize);
         }
 
         if(accusationBlock != null){

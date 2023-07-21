@@ -109,7 +109,9 @@ contract BattleShipGame {
             // move manually all the element
             availableGames[i] = availableGames[i + 1];
         }
-        delete availableGames[availableGames.length - 1]; // remove the last element
+        
+        availableGames.pop(); // remove the last element
+        
         return find;
     }
 
