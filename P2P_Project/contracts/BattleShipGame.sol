@@ -82,13 +82,13 @@ contract BattleShipGame {
     constructor() {}
 
     // function to return the gameId
-    function getId() public returns (uint256 toReturn) {
+    function getId() private returns (uint256 toReturn) {
         toReturn = gameId++;
         return toReturn;
     }
 
     // function to remove an element of the array availableGames
-    function removeFromArray(uint256 _gameId) public returns (bool) {
+    function removeFromArray(uint256 _gameId) private returns (bool) {
         uint256 index;
         bool find = false;
 
@@ -122,7 +122,7 @@ contract BattleShipGame {
     }
 
     // function to get the gameId of an avaible game
-    function randomGame() public returns (uint256 randGameId) {
+    function randomGame() private returns (uint256 randGameId) {
         if (availableGames.length == 0) {
             return 0;
         }
