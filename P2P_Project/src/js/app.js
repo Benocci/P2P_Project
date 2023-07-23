@@ -17,6 +17,7 @@ var iHostTheGame = false;
 var isMyTurn = false;
 var iWasAccused = false;
 
+// function to click eventListener
 const submitBoardFunction = () => {App.submitBoard()};
 const accusationFunction = () => {App.accuseOpponent()};
 
@@ -223,7 +224,6 @@ App = {
     }).then(async function (logArray) {
       App.handleEvents();
     }).catch(function (err) {
-      //alert("ERROR: " + err.message);
       console.log(err.message);
     });
   },
@@ -235,13 +235,12 @@ App = {
     }).then(async function (logArray) {
       App.backToMainMenu();
     }).catch(function (err) {
-      //alert("ERROR: " + err.message);
       console.log(err.message);
     });
   },
 
 
-  handleEvents: async function () { // function to handle the event received from an opponent
+  handleEvents: async function () { // function to handle the event received from contract
     let lastBlock = null;
     let accusationBlock = null;
 
@@ -249,6 +248,7 @@ App = {
       (err, events) => {
 
         if (events.event == "AmountEthResponse" && events.args._gameId.toNumber() == gameId && events.blockNumber != lastBlock) {
+          // amount eth response from an opponent
           lastBlock = events.blockNumber;
 
           if (events.args._response.toNumber() == 0) { // the opponent have refuse the ethereum amount
@@ -264,15 +264,17 @@ App = {
           App.createBoardTable();
         }
         else if (events.event == "ShotShip" && events.args._gameId.toNumber() == gameId && events.args._address == web3.eth.defaultAccount && events.blockNumber != lastBlock) {
+          // handle the shot
           lastBlock = events.blockNumber;
 
+          // get the coordinates
           const cellRow = events.args._row.toNumber();
           const cellCol = events.args._col.toNumber();
           const cell = document.querySelector(
             `div.my-cell[data-row='${cellRow}'][data-col='${cellCol}']`
           );
 
-          var hit;
+          var hit; // check if the shot miss or hit
           if (myBoardMatrix[cellRow][cellCol] === 0) {
             cell.innerHTML = "✖";
             $('#messageInfo').text("Your opponent miss the shot, it is your turn!");
@@ -288,6 +290,7 @@ App = {
           document.getElementById('accusationBtn').addEventListener("click", accusationFunction);
           $('#accusationInfo').text("Accuse the opponent to have left the game!");
 
+          // creation the merkle proof
           var merkleProof = App.createMerkleProof(cellRow, cellCol);
           var hash = App.getHash(cellRow, cellCol);
 
@@ -295,15 +298,16 @@ App = {
             newInstance = instance
             return newInstance.shotResult(gameId, cellRow, cellCol, hit, hash, merkleProof);
           }).then(async function (logArray) {
-            isMyTurn = true;
+            isMyTurn = true; // if the call return with no error is my turn
           }).catch(function (err) {
-            //alert("ERROR: " + err.message);
             console.log(err.message);
           });
         }
         else if (events.event == "ShotResult" && events.args._gameId.toNumber() == gameId && events.args._address == web3.eth.defaultAccount && events.blockNumber != lastBlock) {
+          // result of the shot
           lastBlock = events.blockNumber;
 
+          // get te coordinates of the cell fired
           const cellRow = events.args._row.toNumber();
           const cellCol = events.args._col.toNumber();
           const cell = document.querySelector(
@@ -312,7 +316,7 @@ App = {
 
           var result = events.args._result.toNumber();
 
-          if (result === 0) {
+          if (result === 0) { // print the result on the cell
             cell.innerHTML = "✖";
             $('#messageInfo').text("You miss the shot, it is your opponent's turn!");
           } else {
@@ -321,53 +325,59 @@ App = {
           }
         }
         else if (events.event == "GameEnded" && events.args._gameId.toNumber() == gameId) {
+          // handel the end game events
           lastBlock = events.blockNumber;
 
-          if(events.args._reason == 0){
-            if(events.args._winner == web3.eth.defaultAccount){
+          if(events.args._reason == 0){ // first reason: cheating
+            if(events.args._winner == web3.eth.defaultAccount){ // opponent cheating
               $('#messageInfo').text("The opponent is cheating, you win!");
             }
-            else{
+            else{ // you cheat
               $('#messageInfo').text("You are cheating, your opponent wins!");
             }
           }
-          else if(events.args._reason == 1){
-            if(events.args._winner == web3.eth.defaultAccount){
+          else if(events.args._reason == 1){ // second reason: end game win
+            if(events.args._winner == web3.eth.defaultAccount){ // you win
               $('#messageInfo').text("Game ended correctly, you win!");
             }
-            else{
+            else{ // opponent win
               $('#messageInfo').text("The game is over, your opponent wins!");
             }
           }
-          else if(events.args._reason == 2){
-            if(events.args._winner == web3.eth.defaultAccount){
+          else if(events.args._reason == 2){ // third reason: opponent inactivity
+            if(events.args._winner == web3.eth.defaultAccount){ // the opponent has left
               $('#messageInfo').text("Your opponent has left the game, you win!");
             }
-            else{
+            else{ // you lose for inactivity
               $('#messageInfo').text("You lose for inactivity!");
             }
           }
 
+          // show back to menu button
           $('#endBtn').show();
           $('#accusationBtn').hide();
           document.getElementById('endBtn').addEventListener("click", () => {location.reload()});
         }
         else if(events.event == "AccusationTrigger" && events.args._gameId.toNumber() == gameId && events.args._accused == web3.eth.defaultAccount && events.blockNumber != lastBlock){
+          // the opponent accuse you of inactivity
           lastBlock = events.blockNumber;
           $('#accusationInfo').text("The opponent triggered a notification! If you don't play you will automatically lose the game!");
           document.getElementById('accusationBtn').removeEventListener("click", accusationFunction);
           iWasAccused = true;
         }
         else if(events.event == "AccusationTrigger" && events.args._gameId.toNumber() == gameId && events.args._accuser == web3.eth.defaultAccount && events.blockNumber != lastBlock){
+          // your accuse was notified
           lastBlock = events.blockNumber;
           accusationBlock = events.blockNumber + 5;
         }
         else if(events.event == "ResolveAccuse" && events.args._gameId.toNumber() == gameId && events.args._accuser == web3.eth.defaultAccount && events.blockNumber != lastBlock){
+          // the opponent isn't inactive
           accusationBlock = null;
         }
 
-        if(accusationBlock != null){
-          if(accusationBlock >= events.blockNumber){
+        if(accusationBlock != null){ // if you have an active accuse
+          if(accusationBlock >= events.blockNumber){ // if the current block is lower than the accusationBlock 
+            // call the accuse verify
             App.contracts.BattleShipGame.deployed().then(async function (instance) {
               newInstance = instance
               return newInstance.verifyAccuse(gameId);
@@ -473,6 +483,7 @@ App = {
       isMyTurn = false;
     }
 
+    // creation of the merkle tree
     merkleTree = App.createMerkleTree();
     merkleRoot = merkleTree[merkleTree.length - 1][0];
 
@@ -480,6 +491,7 @@ App = {
       newInstance = instance
       return newInstance.submitBoard(gameId, merkleRoot);
     }).then(async function (logArray) {
+      // if the board submit goes right i show the opponent board to play 
       if (isMyTurn) {
         $('#messageInfo').text("Game started, it is your turn!");
       }
@@ -622,16 +634,16 @@ App = {
 
   createMerkleProof: function (row, col) {
     const merkleProof = [];
-    let index = (row * boardSize) + col;
+    let flatIndex = (row * boardSize) + col;
 
     for (let i = 0; i < (merkleTree.length - 1); i++) {
-      if (index % 2 == 0) {
-        merkleProof.push(merkleTree[i][index + 1]);
-        index = index / 2;
+      if (flatIndex % 2 == 0) {
+        merkleProof.push(merkleTree[i][flatIndex + 1]);
+        flatIndex = flatIndex / 2;
       }
       else {
-        merkleProof.push(merkleTree[i][index - 1]);
-        index = (index - 1) / 2;
+        merkleProof.push(merkleTree[i][flatIndex - 1]);
+        flatIndex = (flatIndex - 1) / 2;
       }
     }
 

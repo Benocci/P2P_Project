@@ -470,10 +470,12 @@ contract BattleShipGame {
             revert OutputError("Player not in that game!");
         }
 
-        if (gameList[_gameId].accuser == address(0)) {
+        if (gameList[_gameId].accuser == address(0)) { // if there isn't an accuser
+            // set the accuser and the accusationTime:
             gameList[_gameId].accuser = msg.sender;
             gameList[_gameId].accusationTime = block.number + 5;
 
+            // send the event of the accusation
             if (gameList[_gameId].accuser == gameList[_gameId].creator) {
                 emit AccusationTrigger(
                     _gameId,
@@ -510,8 +512,9 @@ contract BattleShipGame {
             revert OutputError("Player not in that game!");
         }
 
-        if (gameList[_gameId].accuser == gameList[_gameId].creator) {
-            if (gameList[_gameId].accusationTime <= block.number) {
+        if (gameList[_gameId].accuser == gameList[_gameId].creator) { // if the creatore was the accuser
+
+            if (gameList[_gameId].accusationTime <= block.number) { // if the time has passed the games end
                 payable(gameList[_gameId].accuser).transfer(
                     gameList[_gameId].ethBetted
                 );
@@ -523,8 +526,9 @@ contract BattleShipGame {
                     2
                 );
             }
-        } else if (gameList[_gameId].accuser == gameList[_gameId].joiner) {
-            if (gameList[_gameId].accusationTime <= block.number) {
+        } else if (gameList[_gameId].accuser == gameList[_gameId].joiner) { // if the joiner was the accuser
+            
+            if (gameList[_gameId].accusationTime <= block.number) { // if the time has passed the games end
                 payable(gameList[_gameId].accuser).transfer(
                     gameList[_gameId].ethBetted
                 );
