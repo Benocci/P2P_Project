@@ -495,6 +495,21 @@ contract BattleShipGame {
     //    - Total Price: 0.00004245 ETH
     //
     function verifyAccuse(uint256 _gameId) public payable {
+        // function that verifies that the accusation time has elapsed
+
+        // Check if the game ID is valid
+        if (_gameId <= 0) {
+            revert OutputError("Game id is negative!");
+        }
+
+        // Check if the sender is either the creator or the joiner of the game
+        if (
+            gameList[_gameId].creator != msg.sender &&
+            gameList[_gameId].joiner != msg.sender
+        ) {
+            revert OutputError("Player not in that game!");
+        }
+
         if (gameList[_gameId].accuser == gameList[_gameId].creator) {
             if (gameList[_gameId].accusationTime <= block.number) {
                 payable(gameList[_gameId].accuser).transfer(

@@ -365,9 +365,6 @@ App = {
         else if(events.event == "ResolveAccuse" && events.args._gameId.toNumber() == gameId && events.args._accuser == web3.eth.defaultAccount && events.blockNumber != lastBlock){
           accusationBlock = null;
         }
-        else if(events.event == "DebugInfo"){
-          console.log("DEBUG: Id inviato:" + events.args._gameId + " Id creato: " + events.args._ID + " numero di ID nell'array " + events.args._arraySize);
-        }
 
         if(accusationBlock != null){
           if(accusationBlock >= events.blockNumber){
