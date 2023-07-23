@@ -250,7 +250,8 @@ App = {
 
         if (events.event == "AmountEthResponse" && events.args._gameId.toNumber() == gameId && events.blockNumber != lastBlock) {
           lastBlock = events.blockNumber;
-          if (events.args._response) { // the opponent have refuse the ethereum amount
+
+          if (events.args._response.toNumber() == 0) { // the opponent have refuse the ethereum amount
             return;
           }
 
@@ -262,7 +263,7 @@ App = {
           
           App.createBoardTable();
         }
-        else if (events.event == "ShootShip" && events.args._gameId.toNumber() == gameId && events.args._address == web3.eth.defaultAccount && events.blockNumber != lastBlock) {
+        else if (events.event == "ShotShip" && events.args._gameId.toNumber() == gameId && events.args._address == web3.eth.defaultAccount && events.blockNumber != lastBlock) {
           lastBlock = events.blockNumber;
 
           const cellRow = events.args._row.toNumber();
@@ -292,7 +293,7 @@ App = {
 
           App.contracts.BattleShipGame.deployed().then(async function (instance) {
             newInstance = instance
-            return newInstance.shootResult(gameId, cellRow, cellCol, hit, hash, merkleProof);
+            return newInstance.shotResult(gameId, cellRow, cellCol, hit, hash, merkleProof);
           }).then(async function (logArray) {
             isMyTurn = true;
           }).catch(function (err) {
@@ -300,7 +301,7 @@ App = {
             console.log(err.message);
           });
         }
-        else if (events.event == "ShootResult" && events.args._gameId.toNumber() == gameId && events.args._address == web3.eth.defaultAccount && events.blockNumber != lastBlock) {
+        else if (events.event == "ShotResult" && events.args._gameId.toNumber() == gameId && events.args._address == web3.eth.defaultAccount && events.blockNumber != lastBlock) {
           lastBlock = events.blockNumber;
 
           const cellRow = events.args._row.toNumber();
@@ -518,7 +519,7 @@ App = {
     });
   },
 
-  startBattleFase: function () { // function to show the opponentBoard and start the shoot fase
+  startBattleFase: function () { // function to show the opponentBoard and start the shot fase
     const board = document.getElementById('battleGameBoard');
     board.style = "grid-template-columns: 40px repeat(" + boardSize + ", 1fr);grid-template-rows: 40px repeat(" + boardSize + ", 1fr);"
 
@@ -543,13 +544,13 @@ App = {
         cell.classList.add("opponent-cell");
         cell.dataset.row = i;
         cell.dataset.col = j;
-        cell.addEventListener("click", (event) => App.handleShoot(event));
+        cell.addEventListener("click", (event) => App.handleShot(event));
         board.appendChild(cell);
       }
     }
   },
 
-  handleShoot: function (event) { // function to handle the shot on a cell
+  handleShot: function (event) { // function to handle the shot on a cell
     var cellRow = event.target.dataset.row;
     var cellCol = event.target.dataset.col;
 
@@ -574,11 +575,14 @@ App = {
 
     App.contracts.BattleShipGame.deployed().then(async function (instance) {
       newInstance = instance
-      return newInstance.shoot(gameId, cellRow, cellCol);
+      return newInstance.shot(gameId, cellRow, cellCol);
     }).then(function (reciept) {
     }).catch(function (err) {
-      //alert("ERROR: " + err.message);
       console.log(err.message);
+
+      opponentBoardMatrix[cellRow][cellCol] = 0;
+      isMyTurn = true;
+      $('#messageInfo').text("Transaction failed, try again!");
     });
   },
 

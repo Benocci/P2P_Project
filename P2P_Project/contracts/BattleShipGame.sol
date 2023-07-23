@@ -42,17 +42,17 @@ contract BattleShipGame {
         address _sender,
         uint256 _amount,
         uint256 indexed _gameId,
-        bool response
+        uint256 _response
     );
 
-    event ShootShip(
+    event ShotShip(
         uint256 indexed _gameId,
         address _address,
         uint256 _row,
         uint256 _col
     );
 
-    event ShootResult(
+    event ShotResult(
         uint256 indexed _gameId,
         address _address,
         uint256 _row,
@@ -254,6 +254,13 @@ contract BattleShipGame {
             // refuse response
             gameList[_gameId].joiner = address(0);
             availableGames.push(_gameId);
+
+            emit AmountEthResponse(
+            msg.sender,
+            gameList[_gameId].ethAmount,
+            _gameId,
+            0
+        );
         } else {
             require(
                 msg.value == gameList[_gameId].ethAmount,
@@ -261,14 +268,14 @@ contract BattleShipGame {
             );
 
             gameList[_gameId].ethBetted += msg.value;
-        }
 
-        emit AmountEthResponse(
+            emit AmountEthResponse(
             msg.sender,
             gameList[_gameId].ethAmount,
             _gameId,
-            _response
+            1
         );
+        }
     }
 
     // GAS EVALUATION:
@@ -314,7 +321,7 @@ contract BattleShipGame {
     //    - Gas used: 31670
     //    - Total Price: 0.0000475 ETH
     //
-    function shoot(uint256 _gameId, uint256 _row, uint256 _col) public {
+    function shot(uint256 _gameId, uint256 _row, uint256 _col) public {
         // function to communicate the coordinates of the fired cell
 
         // Check if the game ID is valid
@@ -344,14 +351,14 @@ contract BattleShipGame {
             opponentAddress = gameList[_gameId].creator;
         }
 
-        emit ShootShip(_gameId, opponentAddress, _row, _col);
+        emit ShotShip(_gameId, opponentAddress, _row, _col);
     }
 
     // GAS EVALUATION:
     //    - Gas used: 47020
     //    - Total Price: 0.00007053 ETH
     //
-    function shootResult(
+    function shotResult(
         uint256 _gameId,
         uint256 _row,
         uint256 _col,
@@ -404,7 +411,7 @@ contract BattleShipGame {
 
         uint256 shipsRemaining;
         if (merkleRoot == hashValue) {
-            // validated shoot
+            // validated shot
             if (msg.sender == gameList[_gameId].creator) {
                 if (_result == 1) {
                     gameList[_gameId].joinerNumShips =
@@ -421,7 +428,7 @@ contract BattleShipGame {
                 shipsRemaining = gameList[_gameId].creatorNumShips;
             }
 
-            emit ShootResult(
+            emit ShotResult(
                 _gameId,
                 opponentAddress,
                 _row,
@@ -430,7 +437,7 @@ contract BattleShipGame {
                 shipsRemaining
             );
         } else {
-            // invlidated shoot
+            // invlidated shot
             emit GameEnded(_gameId, opponentAddress, msg.sender, 0);
             payable(opponentAddress).transfer(gameList[_gameId].ethBetted);
             return;
