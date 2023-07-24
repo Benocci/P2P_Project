@@ -532,6 +532,7 @@ App = {
     const board = document.getElementById('battleGameBoard');
     board.style = "grid-template-columns: 40px repeat(" + boardSize + ", 1fr);grid-template-rows: 40px repeat(" + boardSize + ", 1fr);"
 
+    // show the opponent game board
     for (let j = 0; j <= boardSize; j++) {
       const headerCell = document.createElement("div");
       headerCell.classList.add("header-cell");
@@ -572,6 +573,8 @@ App = {
       alert("You have already attackd this cell, try again!");
       return;
     }
+
+    // if is my turn and i never attack that cell i send the coordinates to the opponent
     opponentBoardMatrix[cellRow][cellCol] = 1;
     isMyTurn = false;
     $('#messageInfo').text("Shot sent, awaiting response from the opponent!");
@@ -589,6 +592,7 @@ App = {
     }).catch(function (err) {
       console.log(err.message);
 
+      // if the transaction fails I go back to the previous state and allow to shoot again
       opponentBoardMatrix[cellRow][cellCol] = 0;
       isMyTurn = true;
       $('#messageInfo').text("Transaction failed, try again!");
@@ -603,15 +607,16 @@ App = {
 
     var merkleTreeMatrix = [];
 
+    // creation of the leaf of the merkle tree
     var temp = [];
     for (let i = 0; i < boardSize; i++) {
       for (let j = 0; j < boardSize; j++) {
         temp.push(window.web3Utils.soliditySha3(myBoardMatrix[i][j].toString() + Math.floor(Math.random() * 10)));
       }
     }
-
     merkleTreeMatrix.push(temp);
 
+    // creation of the inside node (included the root)
     while (temp.length > 1) {
       const nextLevel = [];
       for (let j = 0; j < temp.length; j += 2) {
@@ -636,6 +641,7 @@ App = {
     const merkleProof = [];
     let flatIndex = (row * boardSize) + col;
 
+    // select the right node (siblings of the node to verify)
     for (let i = 0; i < (merkleTree.length - 1); i++) {
       if (flatIndex % 2 == 0) {
         merkleProof.push(merkleTree[i][flatIndex + 1]);
