@@ -151,7 +151,7 @@ contract BattleShipGame {
             revert OutputError("Invalid board size or ship number!");
         }
 
-        require(msg.value == _ethAmount, "ETH amount are wrong!");
+        require(msg.value/1000000000000000000 == _ethAmount, "ETH amount are wrong!");
 
         uint256 newGameId = getId();
 
@@ -264,7 +264,7 @@ contract BattleShipGame {
         );
         } else {
             require(
-                msg.value == gameList[_gameId].ethAmount,
+                msg.value/1000000000000000000 == gameList[_gameId].ethAmount,
                 "ETH amount are wrong!"
             );
 

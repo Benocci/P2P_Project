@@ -130,7 +130,7 @@ App = {
       // call to the contract
       App.contracts.BattleShipGame.deployed().then(async function (instance) {
         newInstance = instance
-        return newInstance.createGame(boardSize, shipNumber, ethAmmount, { value: (ethAmmount) });
+        return newInstance.createGame(boardSize, shipNumber, ethAmmount, { value: (ethAmmount*1000000000000000000) });
       }).then(async function (logArray) { // callback to the contract function createGame
         gameId = logArray.logs[0].args._gameId.toNumber(); // get the gameId from the event emitted in the contract
         if (gameId < 0) {
@@ -222,7 +222,7 @@ App = {
   acceptEthAmount: function () { // function to accept the ethereum amount
     App.contracts.BattleShipGame.deployed().then(async function (instance) {
       newInstance = instance
-      return newInstance.amountEthDecision(gameId, true, { value: (ethAmmount) });
+      return newInstance.amountEthDecision(gameId, true, { value: (ethAmmount*1000000000000000000) });
     }).then(async function (logArray) {
       App.handleEvents();
     }).catch(function (err) {
