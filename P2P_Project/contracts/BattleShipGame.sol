@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.4.22 <0.9.0;
 
+// FRANCESCO BENOCCI 24/07/2023
 contract BattleShipGame {
     struct gameInfo {
         // struct with all the information about a game
