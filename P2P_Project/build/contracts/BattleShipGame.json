@@ -30818,12 +30818,12 @@
     "5777": {
       "events": {},
       "links": {},
-      "address": "0x1CbdaFccaB3ac0F0c16c81Ac5a7c3f066cC45481",
-      "transactionHash": "0xe540cae2838f92970ea1696d6af2bc5cfa3b811351d7a6a07828041482ed368d"
+      "address": "0xdD6b8785d7af8c03A4A9F51692781633F3D2d299",
+      "transactionHash": "0x6fb8d150cdda9af8b9213aef42756d62821e3501972935bc424ca41a296db6c4"
     }
   },
   "schemaVersion": "3.4.13",
-  "updatedAt": "2023-07-24T12:39:38.362Z",
+  "updatedAt": "2023-07-28T09:53:49.056Z",
   "networkType": "ethereum",
   "devdoc": {
     "kind": "dev",
